@@ -18,7 +18,7 @@ VAULT_ADDRESS=          # filled in by /deploy-vault
 ## Install
 
 ```bash
-git clone https://github.com/your-org/vault-skills
+git clone https://github.com/BittyIO/vault-skills
 cd vault-skills
 # Open Claude Code here — skills load automatically
 claude
