@@ -18,8 +18,8 @@ VAULT_ADDRESS=          # filled in by /deploy-vault
 ## Install
 
 ```bash
-git clone https://github.com/your-org/bittyvault-skills
-cd bittyvault-skills
+git clone https://github.com/your-org/vault-skills
+cd vault-skills
 # Open Claude Code here — skills load automatically
 claude
 ```
