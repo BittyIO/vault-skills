@@ -68,7 +68,7 @@ This walks through all 11 steps interactively: generate an AI asset manager, dep
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
 | Aave V3 Protocol | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
 | Lido V2 Protocol | `0x2Db440cF6215d68d44736A287B253F4461399aa0` |
-| Uniswap V3 Protocol | `0x0feC90C103d43Bfb43f65494766F53782f8e05bA` |
+| Uniswap V3 Protocol | `0x642810409Aa6b2854777bf321adfb8B131cD91D0` |
 
 ## Known Sepolia limitations
 

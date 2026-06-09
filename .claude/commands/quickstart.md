@@ -1,15 +1,16 @@
 End-to-end demo that walks through the full BittyVault lifecycle on Sepolia:
 generate asset manager → deploy vault → fund vault → swap → supply → withdraw → stake → unstake.
 
-**Usage:** `/quickstart <owner_address> [demo_amount]`
+**Usage:** `/quickstart <owner_address> <vault_name> [demo_amount]`
 
 - `<owner_address>` — wallet that will own the vault (your hardware wallet / safe address)
+- `<vault_name>` — name for the vault (e.g. `MyVault`)
 - `[demo_amount]` — WETH amount to use for each operation (default: `0.01`)
 
 Arguments: $ARGUMENTS
 
-Parse first token as `<owner>`, second optional token as `<demo_amount>` (default `0.01`).
-If `<owner>` is missing, stop and print: "Usage: /quickstart <owner_address> [demo_amount]"
+Parse first token as `<owner>`, second token as `<vault_name>`, third optional token as `<demo_amount>` (default `0.01`).
+If `<owner>` or `<vault_name>` is missing, stop and print: "Usage: /quickstart <owner_address> <vault_name> [demo_amount]"
 
 ---
 
@@ -25,7 +26,7 @@ If `<owner>` is missing, stop and print: "Usage: /quickstart <owner_address> [de
 | Factory | `0x000000007aBb59ca6E74308f1860557eDe1A285d` |
 | Lending protocol | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
 | Staking protocol | `0x2Db440cF6215d68d44736A287B253F4461399aa0` |
-| AMM protocol | `0x0feC90C103d43Bfb43f65494766F53782f8e05bA` |
+| AMM protocol | `0x642810409Aa6b2854777bf321adfb8B131cD91D0` |
 
 ---
 
@@ -42,6 +43,7 @@ Print the demo plan to the user:
 BittyVault Quickstart
 =====================
 Owner        : <owner>
+Vault name   : <vault_name>
 Demo amount  : <demo_amount> WETH per operation
 Network      : Sepolia
 
@@ -134,10 +136,10 @@ Print:
   <asset_manager_address>
 
   The faucet sends 0.05 ETH — enough to cover the full quickstart.
-  Wait for the transaction to confirm, then press Enter to continue.
+  Wait for the transaction to confirm, then enter done to continue.
 ```
 
-Wait for the user to press Enter before proceeding.
+Wait for the user to enter done before proceeding.
 
 Then check the asset manager ETH balance and print it:
 ```bash
@@ -157,13 +159,13 @@ Print: `[3/11] Deploying vault...`
 cast send 0x000000007aBb59ca6E74308f1860557eDe1A285d \
   "deployVault(address,string,address,address[],address[],address[],address[],address[])" \
   "<owner>" \
-  "" \
+  "<vault_name>" \
   "<asset_manager_address>" \
   "[0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9,0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14,0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c,0x29f2D40B0605204364af54EC677bD022dA425d03]" \
   "[0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0,0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8]" \
   "[0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436]" \
   "[0x2Db440cF6215d68d44736A287B253F4461399aa0]" \
-  "[0x0feC90C103d43Bfb43f65494766F53782f8e05bA]" \
+  "[0x642810409Aa6b2854777bf321adfb8B131cD91D0]" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
 ```
@@ -172,7 +174,7 @@ Compute the vault address:
 ```bash
 cast call 0x000000007aBb59ca6E74308f1860557eDe1A285d \
   "computeVaultAddress(address,string)(address)" \
-  "<owner>" "" \
+  "<owner>" "<vault_name>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 
@@ -276,7 +278,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "rebalance(address,address,address,uint256,uint256,bytes)" \
-  "0x0feC90C103d43Bfb43f65494766F53782f8e05bA" \
+  "0x642810409Aa6b2854777bf321adfb8B131cD91D0" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "$WETH_RAW" "1" "$DATA" \
@@ -327,7 +329,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "rebalance(address,address,address,uint256,uint256,bytes)" \
-  "0x0feC90C103d43Bfb43f65494766F53782f8e05bA" \
+  "0x642810409Aa6b2854777bf321adfb8B131cD91D0" \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "$USDC_BEFORE" "1" "$DATA" \
@@ -590,6 +592,7 @@ Print:
   BittyVault Quickstart Complete!
 ===========================================
   Vault         : <vault_address>
+  Vault name    : <vault_name>
   Owner         : <owner>
   Asset manager : <asset_manager_address>
 

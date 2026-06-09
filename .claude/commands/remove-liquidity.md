@@ -16,7 +16,7 @@ Parse `$ARGUMENTS` as three parts. If any are missing, stop and print usage.
 
 ## Hardcoded Sepolia configuration
 
-AMM protocol: `0x0feC90C103d43Bfb43f65494766F53782f8e05bA`
+AMM protocol: `0x642810409Aa6b2854777bf321adfb8B131cD91D0`
 
 UniswapV3 NonfungiblePositionManager (Sepolia): `0x1238536071E1c677A632429e3655c799b22cDA52`
 
@@ -100,7 +100,7 @@ Fee tier           : <fee>
 Current liquidity  : <current_liquidity>
 Removing           : <liquidity_percent>% → <LIQUIDITY_TO_REMOVE> units
 Deadline           : <deadline_minutes> min from now
-AMM protocol       : 0x0feC90C103d43Bfb43f65494766F53782f8e05bA
+AMM protocol       : 0x642810409Aa6b2854777bf321adfb8B131cD91D0
 ```
 
 Ask: "Proceed with removing liquidity? (yes/no)"
@@ -111,7 +111,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "removeLiquidity(address,bytes)" \
-  "0x0feC90C103d43Bfb43f65494766F53782f8e05bA" \
+  "0x642810409Aa6b2854777bf321adfb8B131cD91D0" \
   "$DATA" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"

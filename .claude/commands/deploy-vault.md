@@ -25,7 +25,7 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
 | Lending protocol | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
 | Staking protocol | `0x2Db440cF6215d68d44736A287B253F4461399aa0` |
-| AMM protocol | `0x0feC90C103d43Bfb43f65494766F53782f8e05bA` |
+| AMM protocol | `0x642810409Aa6b2854777bf321adfb8B131cD91D0` |
 
 ---
 
@@ -76,7 +76,7 @@ cast send 0x000000007aBb59ca6E74308f1860557eDe1A285d \
   "[0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0,0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8]" \
   "[0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436]" \
   "[0x2Db440cF6215d68d44736A287B253F4461399aa0]" \
-  "[0x0feC90C103d43Bfb43f65494766F53782f8e05bA]" \
+  "[0x642810409Aa6b2854777bf321adfb8B131cD91D0]" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
 ```
