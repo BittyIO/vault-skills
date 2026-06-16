@@ -59,7 +59,7 @@ This walks through all 11 steps interactively: generate an AI asset manager, dep
 
 | Contract | Address |
 |----------|---------|
-| BittyVaultFactory | `0x000000007aBb59ca6E74308f1860557eDe1A285d` |
+| BittyVaultFactory | `0x00000000F2224EC881C9FA510e344DDC4EF3a74d` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
 | WETH (Uniswap) | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
 | WETH (Aave) | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |
@@ -68,7 +68,7 @@ This walks through all 11 steps interactively: generate an AI asset manager, dep
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
 | Aave V3 Protocol | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
 | Lido V2 Protocol | `0x2Db440cF6215d68d44736A287B253F4461399aa0` |
-| Uniswap V3 Protocol | `0x642810409Aa6b2854777bf321adfb8B131cD91D0` |
+| Uniswap V3 Protocol | `0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81` |
 
 ## Known Sepolia limitations
 
