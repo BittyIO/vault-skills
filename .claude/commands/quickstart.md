@@ -67,8 +67,9 @@ Steps:
   10. Request unstake from Lido
   11. Claim unstaked WETH (polls until Lido finalizes)
   12. Add liquidity: mint WETH_AAVE/WETH_UNI UniswapV3 position
-  13. Claim AMM fees from the new position
-  14. Remove liquidity (100%) from the position
+  13. Swap remaining WETH_AAVE → WETH_UNI to generate fees
+  14. Claim AMM fees from the new position
+  15. Remove liquidity (100%) from the position
 ```
 
 Ask: "Ready to begin? (yes/no)"
@@ -110,7 +111,7 @@ In auto mode, parse `transactionHash` from the `cast send` output. In manual mod
 
 ### Step 1 — Generate AI asset manager
 
-Print: `[1/14] Generating AI asset manager keypair...`
+Print: `[1/15] Generating AI asset manager keypair...`
 
 Generate a new keypair:
 ```bash
@@ -137,7 +138,7 @@ Print:
 
 Print:
 ```
-[2/14] Fund the asset manager with Sepolia ETH.
+[2/15] Fund the asset manager with Sepolia ETH.
 
   Open the Google Sepolia faucet in your browser:
   https://cloud.google.com/application/web3/faucet/ethereum/sepolia
@@ -163,7 +164,7 @@ Print: `✓ Balance confirmed: <balance> wei`
 
 ### Step 3 — Deploy vault
 
-Print: `[3/14] Deploying vault...`
+Print: `[3/15] Deploying vault...`
 
 ```bash
 cast send 0x00000000F2224EC881C9FA510e344DDC4EF3a74d \
@@ -201,7 +202,7 @@ Print:
 
 ### Step 4 — Fund the vault
 
-Print: `[4/14] Funding vault — wrapping ETH into WETH, WETH_UNI, WETH_AAVE...`
+Print: `[4/15] Funding vault — wrapping ETH into WETH, WETH_UNI, WETH_AAVE...`
 
 Check asset manager ETH balance:
 ```bash
@@ -253,7 +254,7 @@ Print:
 
 ### Step 5 — Swap WETH → USDC
 
-Print: `[5/14] Swapping <demo_amount> WETH → USDC...`
+Print: `[5/15] Swapping <demo_amount> WETH → USDC...`
 
 Convert `<demo_amount>` to wei:
 ```bash
@@ -314,7 +315,7 @@ Print:
 
 ### Step 6 — Swap USDC → WETH
 
-Print: `[6/14] Swapping USDC → WETH...`
+Print: `[6/15] Swapping USDC → WETH...`
 
 Use the full `USDC_AFTER` from step 4 as `<usdc_balance>`. Capture balances before:
 ```bash
@@ -365,7 +366,7 @@ Print:
 
 ### Step 7 — Supply WETH_AAVE to Aave
 
-Print: `[7/14] Supplying WETH_AAVE to Aave...`
+Print: `[7/15] Supplying WETH_AAVE to Aave...`
 
 Note: USDC is frozen on Aave Sepolia (error 51). Use WETH_AAVE (`0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c`) instead.
 
@@ -405,7 +406,7 @@ Print:
 
 ### Step 8 — Withdraw WETH_AAVE from Aave
 
-Print: `[8/14] Withdrawing WETH_AAVE from Aave...`
+Print: `[8/15] Withdrawing WETH_AAVE from Aave...`
 
 Reuse `WETH_AAVE_WALLET_AFTER` and `WETH_AAVE_SUPPLIED_AFTER` from step 6 as the before values:
 ```bash
@@ -448,7 +449,7 @@ Print:
 
 ### Step 9 — Stake WETH in Lido
 
-Print: `[9/14] Staking <demo_amount> WETH in Lido...`
+Print: `[9/15] Staking <demo_amount> WETH in Lido...`
 
 Capture balances before:
 ```bash
@@ -484,7 +485,7 @@ Print:
 
 ### Step 10 — Request unstake from Lido
 
-Print: `[10/14] Requesting unstake from Lido...`
+Print: `[10/15] Requesting unstake from Lido...`
 
 First check if the Lido withdrawal queue is paused (known Sepolia limitation):
 ```bash
@@ -547,7 +548,7 @@ If step 10 was skipped (withdrawal queue paused), also skip step 11 and go to th
 
 Print:
 ```
-[11/14] Waiting for Lido withdrawal to finalize...
+[11/15] Waiting for Lido withdrawal to finalize...
 (This can take minutes to hours on Sepolia — polling every 30 seconds)
 ```
 
@@ -595,7 +596,7 @@ Print:
 
 ### Step 12 — Add liquidity (mint WETH_AAVE/WETH_UNI position)
 
-Print: `[12/14] Adding liquidity — minting WETH_AAVE/WETH_UNI position...`
+Print: `[12/15] Adding liquidity — minting WETH_AAVE/WETH_UNI position...`
 
 Capture balances before:
 ```bash
@@ -608,7 +609,7 @@ TOKEN0_BEFORE=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> 
 TOKEN1_BEFORE=$(cast call $TOKEN1 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
 ```
 
-If either balance is less than the required amount, skip steps 12-14 and note "⏭ Skipped — insufficient WETH_AAVE/WETH_UNI balance" in the final summary.
+If either balance is less than the required amount, skip steps 12-15 and note "⏭ Skipped — insufficient WETH_AAVE/WETH_UNI balance" in the final summary.
 
 Compute deadline (10 minutes):
 ```bash
@@ -659,11 +660,51 @@ Print:
 
 ---
 
-### Step 13 — Claim AMM fees from the new position
+### Step 13 — Swap through the pool to generate AMM fees
 
 If step 12 was skipped, also skip this step.
 
-Print: `[13/14] Checking for AMM fees on position <lp_token_id>...`
+Print: `[13/15] Swapping remaining WETH_AAVE through the pool to generate fees for position <lp_token_id>...`
+
+Check remaining WETH_AAVE balance in vault:
+```bash
+SWAP_AMT=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+echo "WETH_AAVE available to swap: $SWAP_AMT"
+```
+
+If `SWAP_AMT` is 0, there is nothing to swap — print a note and skip to Step 14 without a transaction.
+
+Otherwise encode the path (WETH_AAVE → WETH_UNI, fee 3000) and execute:
+```bash
+T0_NO_0X="C558DBdd856501FCd9aaF1E62eae57A9F0629a3c"
+T1_NO_0X="fFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+PATH_HEX="0x${T0_NO_0X}000BB8${T1_NO_0X}"
+
+DATA=$(cast abi-encode \
+  "f(address,uint256,address,uint256,bytes)" \
+  "$TOKEN0" "$SWAP_AMT" "$TOKEN1" "1" "$PATH_HEX")
+
+cast send <vault_address> \
+  "rebalance(address,address,address,uint256,uint256,bytes)" \
+  "0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81" \
+  "$TOKEN0" "$TOKEN1" "$SWAP_AMT" "1" "$DATA" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --private-key "$PRIVATE_KEY"
+```
+
+Print:
+```
+✓ Swapped <SWAP_AMT> WETH_AAVE → WETH_UNI (0.3% fee accrued to position #<lp_token_id>)
+```
+
+---
+
+### Step 14 — Claim AMM fees from the new position
+
+If step 12 was skipped, also skip this step.
+
+Print: `[14/15] Checking for AMM fees on position <lp_token_id>...`
 
 ```bash
 cast call 0x1238536071E1c677A632429e3655c799b22cDA52 \
@@ -706,11 +747,11 @@ Print:
 
 ---
 
-### Step 14 — Remove liquidity (100%) from the position
+### Step 15 — Remove liquidity (100%) from the position
 
 If step 12 was skipped, also skip this step and go to the final summary.
 
-Print: `[14/14] Removing liquidity from position <lp_token_id>...`
+Print: `[15/15] Removing liquidity from position <lp_token_id>...`
 
 Fetch current liquidity:
 ```bash
@@ -790,8 +831,9 @@ Print:
   ✓ 10. Unstake requested from Lido  (or "⚠ Skipped — Lido withdrawal queue paused on Sepolia")
   ✓ 11. Claimed unstaked WETH        (or "⚠ Skipped" / "⏳ Pending — run /claim-unstaked later")
   ✓ 12. Added liquidity — minted WETH_AAVE/WETH_UNI position #<lp_token_id> (or "⏭ Skipped — insufficient balance")
-  ✓ 13. Claimed AMM fees             (or "No fees yet — skipped")
-  ✓ 14. Removed liquidity (100%) from position #<lp_token_id>
+  ✓ 13. Swapped remaining WETH_AAVE → WETH_UNI to generate fees (or "⏭ Skipped — no balance")
+  ✓ 14. Claimed AMM fees
+  ✓ 15. Removed liquidity (100%) from position #<lp_token_id>
 
   Run /vault-balances to see the current vault state.
 ===========================================
