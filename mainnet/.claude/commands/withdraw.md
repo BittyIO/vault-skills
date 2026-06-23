@@ -1,0 +1,137 @@
+Withdraw a supplied asset from the Aave lending protocol back into a BittyVault on Ethereum mainnet.
+
+**Usage:** `/withdraw <asset> <amount>`
+
+- `<asset>` — token symbol (WETH, WBTC, USDC, USDT, USDS) or a raw `0x…` address
+- `<amount>` — human-readable amount (e.g. `1.5` for 1.5 WETH), or `max` to withdraw everything
+
+Arguments: $ARGUMENTS
+
+Parse `$ARGUMENTS` as two parts: asset, amount.
+If any are missing, stop and print: "Usage: /withdraw <asset> <amount>"
+
+---
+
+## Hardcoded mainnet configuration
+
+| Symbol | Address | Decimals |
+|--------|---------|----------|
+| WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` | 18 |
+| WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` | 8 |
+| USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` | 6 |
+| USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
+| USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
+
+Lending protocol (Aave V3): `0xAab4d99E2D040769765adF962A3581B4db4ad8c0`
+
+---
+
+## Steps
+
+### 1. Check environment variables
+
+```bash
+echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
+echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
+echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+```
+
+### 2. Resolve asset address and decimals
+
+If `<asset>` matches a known symbol (case-insensitive), use the table above.
+If `<asset>` starts with `0x`, use it directly — then fetch its decimals:
+
+```bash
+cast call <asset_address> "decimals()(uint8)" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+```
+
+### 3. Fetch current supplied balance
+
+```bash
+cast call $VAULT_ADDRESS \
+  "getSuppliedBalance(address,address)(uint256)" \
+  "0xAab4d99E2D040769765adF962A3581B4db4ad8c0" \
+  "<asset_address>" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+```
+
+Save as `<supplied_balance>`.
+
+If `<supplied_balance>` is 0, stop and print:
+```
+Error: No supplied balance for <asset_symbol> in this vault.
+```
+
+### 4. Resolve amount to raw units
+
+- If `<amount>` is `max`, set `<amount_raw>` = `<supplied_balance>`.
+- If 18 decimals: `cast to-unit <amount>ether wei`
+- Other decimals: compute `<amount> * 10^<decimals>` as an integer
+
+If `<amount_raw>` > `<supplied_balance>`, stop and print:
+```
+Error: Withdrawal amount exceeds supplied balance.
+  Supplied balance : <supplied_balance> (raw)
+  Requested        : <amount_raw> (raw)
+```
+
+### 5. Show preview and ask for confirmation
+
+Print:
+```
+⚠ This is Ethereum mainnet — real funds will be used.
+
+Vault             : $VAULT_ADDRESS
+Asset             : <asset_symbol> (<asset_address>)
+Amount            : <amount> <asset_symbol> (<amount_raw> raw)
+Lending protocol  : 0xAab4d99E2D040769765adF962A3581B4db4ad8c0
+Supplied balance  : <supplied_balance> (raw)
+Remaining after   : <supplied_balance - amount_raw> (raw)
+```
+
+Ask: "Proceed with withdrawal? (yes/no)"
+If no, stop.
+
+### 6. Call withdraw on the vault
+
+```bash
+cast send $VAULT_ADDRESS \
+  "withdraw(address,address,uint256)" \
+  "0xAab4d99E2D040769765adF962A3581B4db4ad8c0" \
+  "<asset_address>" \
+  "<amount_raw>" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --private-key "$PRIVATE_KEY"
+```
+
+If the transaction reverts, print the revert reason and stop.
+
+### 7. Verify and show result
+
+Fetch the new supplied balance and vault token balance after the tx:
+
+```bash
+cast call $VAULT_ADDRESS \
+  "getSuppliedBalance(address,address)(uint256)" \
+  "0xAab4d99E2D040769765adF962A3581B4db4ad8c0" \
+  "<asset_address>" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+```
+
+```bash
+cast call <asset_address> \
+  "balanceOf(address)(uint256)" $VAULT_ADDRESS \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+```
+
+Print a final summary:
+```
+Withdrawal successful!
+  Tx hash          : <tx_hash>
+  Etherscan        : https://etherscan.io/tx/<tx_hash>
+  Asset withdrawn  : <amount> <asset_symbol>
+  Supplied before  : <supplied_balance> (raw)
+  Supplied after   : <supplied_after> (raw)
+  Vault balance    : <vault_balance> (raw)
+```

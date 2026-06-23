@@ -109,16 +109,37 @@ In auto mode, parse `transactionHash` from the `cast send` output. In manual mod
 
 ---
 
-### Step 1 — Generate AI asset manager
+### Step 1 — Set up AI asset manager
 
-Print: `[1/15] Generating AI asset manager keypair...`
+Print: `[1/15] Setting up AI asset manager...`
 
-Generate a new keypair:
+Ask the user:
+```
+How would you like to set up the asset manager?
+  [1] Generate a new keypair
+  [2] Enter an existing private key
+```
+
+**If the user chose option 1 (Generate):**
+
 ```bash
 cast wallet new
 ```
 
 Parse the output and extract `<asset_manager_address>` and `<private_key>`.
+
+**If the user chose option 2 (Enter existing):**
+
+Ask the user to paste their private key. Accept it as `<private_key>`.
+
+Derive the address:
+```bash
+cast wallet address --private-key "<private_key>"
+```
+
+Save the output as `<asset_manager_address>`.
+
+**Then (both paths):**
 
 Save to `.env` (replace existing `PRIVATE_KEY` if present, otherwise append):
 ```
@@ -127,7 +148,7 @@ PRIVATE_KEY=<private_key>
 
 Print:
 ```
-✓ Asset manager generated
+✓ Asset manager configured
   Address : <asset_manager_address>
   Key     : <first_6_chars>...<last_4_chars> (saved to .env)
 ```
