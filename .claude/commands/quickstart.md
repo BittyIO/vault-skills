@@ -23,10 +23,10 @@ If `<owner>` or `<vault_name>` is missing, stop and print: "Usage: /quickstart <
 
 | Role | Address |
 |------|---------|
-| Factory | `0x00000000F2224EC881C9FA510e344DDC4EF3a74d` |
+| Factory | `0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E` |
 | Lending protocol | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
 | Staking protocol | `0x2Db440cF6215d68d44736A287B253F4461399aa0` |
-| AMM protocol | `0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81` |
+| AMM protocol | `0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E` |
 
 | LP pair token | Address | Decimals |
 |--------|---------|----------|
@@ -188,7 +188,7 @@ Print: `✓ Balance confirmed: <balance> wei`
 Print: `[3/15] Deploying vault...`
 
 ```bash
-cast send 0x00000000F2224EC881C9FA510e344DDC4EF3a74d \
+cast send 0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E \
   "deployVault(address,string,address,address[],address[],address[],address[],address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -197,14 +197,14 @@ cast send 0x00000000F2224EC881C9FA510e344DDC4EF3a74d \
   "[0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0,0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8]" \
   "[0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436]" \
   "[0x2Db440cF6215d68d44736A287B253F4461399aa0]" \
-  "[0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81]" \
+  "[0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E]" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Compute the vault address:
 ```bash
-cast call 0x00000000F2224EC881C9FA510e344DDC4EF3a74d \
+cast call 0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
@@ -310,7 +310,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "rebalance(address,address,address,uint256,uint256,bytes)" \
-  "0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81" \
+  "0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "$WETH_RAW" "1" "$DATA" \
@@ -361,7 +361,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "rebalance(address,address,address,uint256,uint256,bytes)" \
-  "0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81" \
+  "0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E" \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "$USDC_BEFORE" "1" "$DATA" \
@@ -655,7 +655,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "addLiquidity(address,address,uint256,address,uint256,bytes)" \
-  "0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81" \
+  "0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E" \
   "$TOKEN0" "$AMOUNT0_RAW" \
   "$TOKEN1" "$AMOUNT1_RAW" \
   "$DATA" \
@@ -708,7 +708,7 @@ DATA=$(cast abi-encode \
 
 cast send <vault_address> \
   "rebalance(address,address,address,uint256,uint256,bytes)" \
-  "0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81" \
+  "0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E" \
   "$TOKEN0" "$TOKEN1" "$SWAP_AMT" "1" "$DATA" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
@@ -753,7 +753,7 @@ DATA=$(cast abi-encode \
 
 cast send <vault_address> \
   "claimAMMFees(address,bytes)" \
-  "0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81" \
+  "0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E" \
   "$DATA" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
@@ -805,7 +805,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "removeLiquidity(address,bytes)" \
-  "0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81" \
+  "0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E" \
   "$DATA" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"

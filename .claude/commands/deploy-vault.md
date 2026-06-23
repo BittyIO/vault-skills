@@ -1,4 +1,4 @@
-Deploy a new BittyVault on Sepolia via the factory at `0x00000000F2224EC881C9FA510e344DDC4EF3a74d`.
+Deploy a new BittyVault on Sepolia via the factory at `0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E`.
 
 **Usage:** `/deploy-vault <owner_address> [vault_name]`
 
@@ -16,7 +16,7 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 | Role | Address |
 |------|---------|
-| Factory | `0x00000000F2224EC881C9FA510e344DDC4EF3a74d` |
+| Factory | `0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
 | WETH_UNI | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
 | WETH_AAVE | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |
@@ -25,7 +25,7 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
 | Lending protocol | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
 | Staking protocol | `0x2Db440cF6215d68d44736A287B253F4461399aa0` |
-| AMM protocol | `0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81` |
+| AMM protocol | `0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E` |
 
 ---
 
@@ -67,7 +67,7 @@ If the user says no, stop.
 ### 4. Deploy the vault
 
 ```bash
-cast send 0x00000000F2224EC881C9FA510e344DDC4EF3a74d \
+cast send 0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E \
   "deployVault(address,string,address,address[],address[],address[],address[],address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -76,7 +76,7 @@ cast send 0x00000000F2224EC881C9FA510e344DDC4EF3a74d \
   "[0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0,0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8]" \
   "[0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436]" \
   "[0x2Db440cF6215d68d44736A287B253F4461399aa0]" \
-  "[0x942C4b8DC8b43FAbD2d7D7a90b3FeFC003Cd9e81]" \
+  "[0x4f0016270Cc88E18CdC1fA7B7c8b4D1ffde7Ad0E]" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
 ```
@@ -86,7 +86,7 @@ If the transaction fails, print the revert reason and stop.
 ### 5. Compute and display the vault address
 
 ```bash
-cast call 0x00000000F2224EC881C9FA510e344DDC4EF3a74d \
+cast call 0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
