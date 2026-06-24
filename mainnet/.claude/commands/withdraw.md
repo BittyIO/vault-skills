@@ -22,7 +22,7 @@ If any are missing, stop and print: "Usage: /withdraw <asset> <amount>"
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-Lending protocol (Aave V3): `0xAab4d99E2D040769765adF962A3581B4db4ad8c0`
+Lending protocol (Aave V3): `0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4`
 
 ---
 
@@ -51,7 +51,7 @@ cast call <asset_address> "decimals()(uint8)" \
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0xAab4d99E2D040769765adF962A3581B4db4ad8c0" \
+  "0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4" \
   "<asset_address>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
@@ -85,7 +85,7 @@ Print:
 Vault             : $VAULT_ADDRESS
 Asset             : <asset_symbol> (<asset_address>)
 Amount            : <amount> <asset_symbol> (<amount_raw> raw)
-Lending protocol  : 0xAab4d99E2D040769765adF962A3581B4db4ad8c0
+Lending protocol  : 0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4
 Supplied balance  : <supplied_balance> (raw)
 Remaining after   : <supplied_balance - amount_raw> (raw)
 ```
@@ -98,7 +98,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "withdraw(address,address,uint256)" \
-  "0xAab4d99E2D040769765adF962A3581B4db4ad8c0" \
+  "0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
@@ -114,7 +114,7 @@ Fetch the new supplied balance and vault token balance after the tx:
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0xAab4d99E2D040769765adF962A3581B4db4ad8c0" \
+  "0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4" \
   "<asset_address>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```

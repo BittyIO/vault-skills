@@ -1,4 +1,4 @@
-Deploy a new BittyVault on Ethereum mainnet via the factory at `0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E`.
+Deploy a new BittyVault on Ethereum mainnet via the factory at `0x0000000094B81677434600b69d739Bc62b66a9c3`.
 
 **Usage:** `/deploy-vault <owner_address> [vault_name]`
 
@@ -16,16 +16,16 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 | Role | Address |
 |------|---------|
-| Factory | `0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E` |
+| Factory | `0x0000000094B81677434600b69d739Bc62b66a9c3` |
 | WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
 | WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` |
 | USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` |
-| Lending protocol (Aave V3) | `0xAab4d99E2D040769765adF962A3581B4db4ad8c0` |
-| Staking protocol (Lido V2) | `0xeB3f9d8ea1bB306526a1e3E979798F03D7dA47E2` |
-| AMM protocol (UniswapV3) | `0xe3F9C4141E85C6B3E1C210a68d1A237E47327947` |
-| Sky V1 protocol | `0xa025A56aABca6682fFfE4E0b7030F24f31a4b8f6` |
+| Lending protocol (Aave V3) | `0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4` |
+| Staking protocol (Lido V2) | `0x4115bB297f21247FC55FD6255f0F8800d4172AF7` |
+| AMM protocol (UniswapV3) | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
+| Sky V1 protocol | `0x350758FA196c94aB4309CD4A953e0097cEAB7cF5` |
 
 ---
 
@@ -70,16 +70,16 @@ If the user says no, stop.
 ### 4. Deploy the vault
 
 ```bash
-cast send 0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E \
+cast send 0x0000000094B81677434600b69d739Bc62b66a9c3 \
   "deployVault(address,string,address,address[],address[],address[],address[],address[])" \
   "<owner>" \
   "<vault_name>" \
   "<asset_manager>" \
   "[0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2,0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599]" \
   "[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48,0xdAC17F958D2ee523a2206206994597C13D831ec7,0xdC035D45d973E3EC169d2276DDab16f1e407384F]" \
-  "[0xAab4d99E2D040769765adF962A3581B4db4ad8c0]" \
-  "[0xeB3f9d8ea1bB306526a1e3E979798F03D7dA47E2]" \
-  "[0xe3F9C4141E85C6B3E1C210a68d1A237E47327947]" \
+  "[0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4]" \
+  "[0x4115bB297f21247FC55FD6255f0F8800d4172AF7]" \
+  "[0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436]" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
 ```
@@ -89,7 +89,7 @@ If the transaction fails, print the revert reason and stop.
 ### 5. Compute and display the vault address
 
 ```bash
-cast call 0x00000000c0CbD44E9115D80A61745A4fbd7E2C9E \
+cast call 0x0000000094B81677434600b69d739Bc62b66a9c3 \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"

@@ -14,7 +14,7 @@ Parse `$ARGUMENTS` as optional request IDs (all tokens).
 
 ## Hardcoded mainnet configuration
 
-Staking protocol (Lido V2): `0xeB3f9d8ea1bB306526a1e3E979798F03D7dA47E2`
+Staking protocol (Lido V2): `0x4115bB297f21247FC55FD6255f0F8800d4172AF7`
 
 WETH: `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2`
 
@@ -39,7 +39,7 @@ Otherwise fetch all pending IDs from the vault:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xeB3f9d8ea1bB306526a1e3E979798F03D7dA47E2" \
+  "0x4115bB297f21247FC55FD6255f0F8800d4172AF7" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 
@@ -70,7 +70,7 @@ Print:
 ⚠ This is Ethereum mainnet — real funds will be used.
 
 Vault             : $VAULT_ADDRESS
-Staking protocol  : 0xeB3f9d8ea1bB306526a1e3E979798F03D7dA47E2
+Staking protocol  : 0x4115bB297f21247FC55FD6255f0F8800d4172AF7
 Request IDs       : <request_ids>
 Vault WETH balance: <weth_before> (raw)
 ```
@@ -83,7 +83,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "claimUnstaked(address,uint256[])" \
-  "0xeB3f9d8ea1bB306526a1e3E979798F03D7dA47E2" \
+  "0x4115bB297f21247FC55FD6255f0F8800d4172AF7" \
   "<request_ids_array>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
@@ -104,7 +104,7 @@ cast call 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 \
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xeB3f9d8ea1bB306526a1e3E979798F03D7dA47E2" \
+  "0x4115bB297f21247FC55FD6255f0F8800d4172AF7" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 

@@ -25,7 +25,7 @@ If the first 4 are missing, stop and print usage.
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-AMM protocol (UniswapV3): `0xe3F9C4141E85C6B3E1C210a68d1A237E47327947`
+AMM protocol (UniswapV3): `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436`
 
 ---
 
@@ -103,7 +103,7 @@ Vault         : $VAULT_ADDRESS
 Sell          : <sell_amount> <from_asset_symbol> (<sell_amount_raw> raw)
 Buy (min)     : <buy_amount_min> <to_asset_symbol> (<buy_amount_min_raw> raw)
 Pool fee      : <fee_tier> (<fee_tier/10000>%)
-AMM protocol  : 0xe3F9C4141E85C6B3E1C210a68d1A237E47327947
+AMM protocol  : 0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436
 Swap path     : <from_asset_symbol> --[<fee_tier>]--> <to_asset_symbol>
 ```
 
@@ -115,7 +115,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "rebalance(address,address,address,uint256,uint256,bytes)" \
-  "0xe3F9C4141E85C6B3E1C210a68d1A237E47327947" \
+  "0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436" \
   "<from_asset_address>" \
   "<to_asset_address>" \
   "<sell_amount_raw>" \

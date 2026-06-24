@@ -8,9 +8,9 @@ No arguments needed. Reads `$VAULT_ADDRESS` from env.
 
 ## Hardcoded Sepolia configuration
 
-Lending protocol: `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436`
+Lending protocol: `0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44`
 
-Staking protocol: `0x2Db440cF6215d68d44736A287B253F4461399aa0`
+Staking protocol: `0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1`
 
 ---
 
@@ -50,7 +50,7 @@ cast call <token_address> \
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436" \
+  "0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44" \
   "<token_address>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
@@ -59,7 +59,7 @@ cast call $VAULT_ADDRESS \
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0x2Db440cF6215d68d44736A287B253F4461399aa0" \
+  "0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1" \
   "<token_address>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
@@ -104,7 +104,7 @@ Finally print a pending unstake section if there are any:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0x2Db440cF6215d68d44736A287B253F4461399aa0" \
+  "0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 

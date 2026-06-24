@@ -21,7 +21,7 @@ If any are missing, stop and print: "Usage: /stake <asset> <amount>"
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-Staking protocol: `0x2Db440cF6215d68d44736A287B253F4461399aa0`
+Staking protocol: `0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1`
 
 ---
 
@@ -79,7 +79,7 @@ Error: Stake amount exceeds vault balance.
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0x2Db440cF6215d68d44736A287B253F4461399aa0" \
+  "0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1" \
   "<asset_address>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
@@ -93,7 +93,7 @@ Print:
 Vault            : $VAULT_ADDRESS
 Asset            : <asset_symbol> (<asset_address>)
 Amount           : <amount> <asset_symbol> (<amount_raw> raw)
-Staking protocol : 0x2Db440cF6215d68d44736A287B253F4461399aa0
+Staking protocol : 0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1
 Vault balance    : <vault_balance> (raw)
 Currently staked : <staked_before> (raw)
 ```
@@ -106,7 +106,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "stake(address,address,uint256)" \
-  "0x2Db440cF6215d68d44736A287B253F4461399aa0" \
+  "0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
@@ -122,7 +122,7 @@ Fetch the new staked balance after the tx:
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0x2Db440cF6215d68d44736A287B253F4461399aa0" \
+  "0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1" \
   "<asset_address>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
