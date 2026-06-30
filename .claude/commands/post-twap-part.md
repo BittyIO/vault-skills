@@ -21,7 +21,6 @@ CoW Swap explorer (Sepolia): `https://explorer.cow.fi/sepolia/`
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ```
 
@@ -29,7 +28,7 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 
 ```bash
 INTENT_PROTOCOL=0x034ef104B0c483EB71Ba2aD91a1de6224AdF4F70
-RPC="https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+RPC="<rpc_url>"
 
 CLONE=$(cast call $VAULT_ADDRESS "getClone(address)(address)" "$INTENT_PROTOCOL" --rpc-url "$RPC")
 ```

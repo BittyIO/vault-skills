@@ -18,7 +18,6 @@ If empty, stop and print: "Usage: /grant-role <address>"
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "SAFE_ADDRESS=${SAFE_ADDRESS:?SAFE_ADDRESS is not set}" && \
 echo "PROPOSER_PRIVATE_KEY=${PROPOSER_PRIVATE_KEY:?PROPOSER_PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
@@ -33,7 +32,7 @@ cast call $VAULT_ADDRESS \
   "hasRole(bytes32,address)(bool)" \
   "0x7613a25ecc738585a232ad50a301178f12b3ba8d3c8deb6a0dfa0418b2964fce" \
   "<address>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 If `true`, stop and print: "Address <address> already has ASSET_MANAGER_ROLE."
@@ -63,7 +62,7 @@ CALLDATA=$(cast calldata \
 
 ```bash
 NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+  --rpc-url "<rpc_url>")
 
 SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
   "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
@@ -71,7 +70,7 @@ SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
   "0x0000000000000000000000000000000000000000" \
   "0x0000000000000000000000000000000000000000" \
   "$NONCE" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+  --rpc-url "<rpc_url>")
 
 PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
 SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
@@ -92,7 +91,7 @@ cast call $VAULT_ADDRESS \
   "hasRole(bytes32,address)(bool)" \
   "0x7613a25ecc738585a232ad50a301178f12b3ba8d3c8deb6a0dfa0418b2964fce" \
   "<address>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Print:

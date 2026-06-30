@@ -23,7 +23,6 @@ Staking protocol: `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C`
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
@@ -38,7 +37,7 @@ Otherwise fetch all pending IDs from the vault:
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 If the result is an empty array, stop and print:
@@ -56,7 +55,7 @@ Fetch the vault's WETH balance (Lido returns WETH on Sepolia):
 ```bash
 cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 \
   "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Save as `<weth_before>`.
@@ -81,7 +80,7 @@ cast send $VAULT_ADDRESS \
   "claimUnstaked(address,uint256[])" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   "<request_ids_array>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -94,14 +93,14 @@ Fetch vault WETH balance and remaining pending request IDs after the tx:
 ```bash
 cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 \
   "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Print a final summary:

@@ -22,7 +22,6 @@ CoW Swap explorer (Sepolia): `https://explorer.cow.fi/sepolia/`
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ```
@@ -54,7 +53,7 @@ cast send $VAULT_ADDRESS \
   "cancelLimitOrder(address,bytes)" \
   "0x034ef104B0c483EB71Ba2aD91a1de6224AdF4F70" \
   "$CANCEL_DATA" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 

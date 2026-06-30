@@ -42,7 +42,6 @@ UniswapV3 NonfungiblePositionManager (mainnet): `0xC36442b4a4522E871399CD717aBDD
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}"
 ```
 
 Print the setup plan to the user:
@@ -138,7 +137,7 @@ Wait for the user to enter done before proceeding.
 Then check the asset manager ETH balance and print it:
 ```bash
 cast balance <asset_manager_address> \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Print: `✓ Balance confirmed: <balance> wei`
@@ -155,7 +154,7 @@ cast send 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
   "<owner>" \
   "<vault_name>" \
   "[<asset_manager_address>]" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -164,7 +163,7 @@ Compute the vault address:
 cast call 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Save as `<vault_address>`. Write `VAULT_ADDRESS=<vault_address>` to `.env`.
@@ -187,7 +186,7 @@ Ask the user for the amount. Accept it as `<fund_amount>`.
 Check asset manager ETH balance:
 ```bash
 ASSET_MANAGER=$(cast wallet address --private-key "$PRIVATE_KEY")
-cast balance "$ASSET_MANAGER" --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+cast balance "$ASSET_MANAGER" --rpc-url "<rpc_url>"
 ```
 
 If balance < `<fund_amount>` ETH (in wei), stop and print:
@@ -204,9 +203,9 @@ Wrap and transfer WETH to the vault:
 
 ```bash
 cast send 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 "deposit()" --value "$AMOUNT_RAW" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" --private-key "$PRIVATE_KEY"
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 cast send 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 "transfer(address,uint256)" "$VAULT_ADDRESS" "$AMOUNT_RAW" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" --private-key "$PRIVATE_KEY"
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 ```
 
 Print:

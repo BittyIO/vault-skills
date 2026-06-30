@@ -17,7 +17,6 @@ If `<name>` is missing, stop and print: "Usage: /pay-receiver <name> [amount]"
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
@@ -43,7 +42,7 @@ cast send $VAULT_ADDRESS \
   "payReceiverAmount(string,uint256)" \
   "<name>" \
   "<amount_raw>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -53,7 +52,7 @@ If `<amount>` was NOT provided, call `payReceiver`:
 cast send $VAULT_ADDRESS \
   "payReceiver(string)" \
   "<name>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 

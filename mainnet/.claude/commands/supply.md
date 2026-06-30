@@ -31,7 +31,6 @@ Lending protocol (Aave V3): `0x1ee9040bD2E2418a4CbC8754865D595920EF9301`
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
@@ -43,7 +42,7 @@ If `<asset>` starts with `0x`, use it directly — then fetch its decimals:
 
 ```bash
 cast call <asset_address> "decimals()(uint8)" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 ### 3. Convert amount to token units (smallest unit / wei)
@@ -60,7 +59,7 @@ Save the result as `<amount_raw>`.
 ```bash
 cast call <asset_address> \
   "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 If the balance is less than `<amount_raw>`, stop and print:
@@ -78,7 +77,7 @@ cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
   "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "<asset_address>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Save as `<supplied_before>`.
@@ -107,7 +106,7 @@ cast send $VAULT_ADDRESS \
   "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "<asset_address>" \
   "<amount_raw>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -122,7 +121,7 @@ cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
   "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "<asset_address>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Print a final summary:

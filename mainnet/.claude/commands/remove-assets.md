@@ -28,7 +28,6 @@ If empty, stop and print: "Usage: /remove-assets <asset1> [asset2] ..."
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "SAFE_ADDRESS=${SAFE_ADDRESS:?SAFE_ADDRESS is not set}" && \
 echo "PROPOSER_PRIVATE_KEY=${PROPOSER_PRIVATE_KEY:?PROPOSER_PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
@@ -46,10 +45,10 @@ Build the Solidity array: `[<addr1>,<addr2>,...]`
 
 ```bash
 cast call $VAULT_ADDRESS "getAssets()(address[])" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 
 cast call $VAULT_ADDRESS "getStableCoins()(address[])" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 ### 4. Show preview and ask for confirmation
@@ -76,7 +75,7 @@ CALLDATA=$(cast calldata \
 
 ```bash
 NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY")
+  --rpc-url "<rpc_url>")
 
 SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
   "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
@@ -84,7 +83,7 @@ SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
   "0x0000000000000000000000000000000000000000" \
   "0x0000000000000000000000000000000000000000" \
   "$NONCE" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY")
+  --rpc-url "<rpc_url>")
 
 PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
 SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
@@ -101,10 +100,10 @@ If the transaction reverts, print the revert reason and stop.
 
 ```bash
 cast call $VAULT_ADDRESS "getAssets()(address[])" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 
 cast call $VAULT_ADDRESS "getStableCoins()(address[])" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Print:

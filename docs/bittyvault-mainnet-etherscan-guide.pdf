@@ -1,0 +1,840 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [7 0 R 9 0 R 11 0 R 13 0 R 15 0 R] /Count 5 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+6 0 obj
+<< /Length 4338 >>
+stream
+BT
+/F1 20 Tf
+1 0 0 1 54 738.00 Tm
+(BittyVault Mainnet Etherscan Guide) Tj
+/F2 9.5 Tf
+1 0 0 1 54 704.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 697.00 Tm
+(Generated from the mainnet/.claude/commands skill set on 2026-06-25.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 684.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 677.00 Tm
+(This guide explains how to create and manage a BittyVault on Ethereum mainnet from) Tj
+/F2 9.5 Tf
+1 0 0 1 54 664.00 Tm
+(  Etherscan. Mainnet transactions use real funds. Test every workflow on Sepolia first,) Tj
+/F2 9.5 Tf
+1 0 0 1 54 651.00 Tm
+(  verify every address, and confirm the connected wallet before signing.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 638.00 Tm
+() Tj
+/F1 14 Tf
+1 0 0 1 54 621.00 Tm
+(1. How Etherscan Contract Tabs Work) Tj
+/F2 9.5 Tf
+1 0 0 1 54 598.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 591.00 Tm
+(Open a contract page on https://etherscan.io/address/<contract_address> and select the) Tj
+/F2 9.5 Tf
+1 0 0 1 54 578.00 Tm
+(  Contract tab.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 565.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 558.00 Tm
+(- Read Contract: view data. No wallet connection is required.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 545.00 Tm
+(- Write Contract: submit transactions. Click Connect to Web3, connect the correct wallet,) Tj
+/F2 9.5 Tf
+1 0 0 1 54 532.00 Tm
+(  fill the function fields, and confirm in your wallet.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 519.00 Tm
+(- Read as Proxy / Write as Proxy: use these tabs if Etherscan shows the vault as a proxy and) Tj
+/F2 9.5 Tf
+1 0 0 1 54 506.00 Tm
+(  exposes proxy-specific interaction tabs.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 493.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 486.00 Tm
+(Etherscan's own guide says Read Contract is for querying contract data, while Write Contract) Tj
+/F2 9.5 Tf
+1 0 0 1 54 473.00 Tm
+(  requires connecting a wallet through Connect to Web3.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 460.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 453.00 Tm
+(Source: https://info.etherscan.com/how-to-use-read-or-write-contract-features-on-etherscan/) Tj
+/F2 9.5 Tf
+1 0 0 1 54 440.00 Tm
+() Tj
+/F1 14 Tf
+1 0 0 1 54 423.00 Tm
+(2. Mainnet Addresses) Tj
+/F2 9.5 Tf
+1 0 0 1 54 400.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 393.00 Tm
+(| Name | Address |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 383.00 Tm
+(| --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 373.00 Tm
+(| BittyVaultFactory | 0x0000000094B81677434600b69d739Bc62b66a9c3 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 363.00 Tm
+(| WETH | 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 353.00 Tm
+(| WBTC | 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 343.00 Tm
+(| USDC | 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 333.00 Tm
+(| USDT | 0xdAC17F958D2ee523a2206206994597C13D831ec7 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 323.00 Tm
+(| USDS | 0xdC035D45d973E3EC169d2276DDab16f1e407384F |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 313.00 Tm
+(| Aave V3 protocol | 0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 303.00 Tm
+(| Lido V2 protocol | 0x4115bB297f21247FC55FD6255f0F8800d4172AF7 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 293.00 Tm
+(| Uniswap V3 protocol | 0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 283.00 Tm
+(| Sky V1 protocol reference | 0x350758FA196c94aB4309CD4A953e0097cEAB7cF5 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 273.00 Tm
+(| Uniswap V3 NonfungiblePositionManager | 0xC36442b4a4522E871399CD717aBDD847Ab11FE88 |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 263.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 256.00 Tm
+(Asset decimals:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 243.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 236.00 Tm
+(| Token | Decimals |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 226.00 Tm
+(| --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 216.00 Tm
+(| WETH | 18 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 206.00 Tm
+(| WBTC | 8 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 196.00 Tm
+(| USDC | 6 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 186.00 Tm
+(| USDT | 6 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 176.00 Tm
+(| USDS | 18 |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 166.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 159.00 Tm
+(Role hash:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 146.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 139.00 Tm
+(| Role | Hash |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 129.00 Tm
+(| --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 119.00 Tm
+(| ASSET_MANAGER_ROLE | 0x7613a25ecc738585a232ad50a301178f12b3ba8d3c8deb6a0dfa0418b2964fce |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 109.00 Tm
+() Tj
+/F1 14 Tf
+1 0 0 1 54 92.00 Tm
+(3. Wallets and Roles) Tj
+/F2 9.5 Tf
+1 0 0 1 54 69.00 Tm
+() Tj
+/F2 8 Tf
+1 0 0 1 54 30 Tm
+(BittyVault Mainnet Etherscan Guide - Page 1 of 5) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 4718 >>
+stream
+BT
+/F2 9.5 Tf
+1 0 0 1 54 738.00 Tm
+(Use separate wallets for separate duties.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 725.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 718.00 Tm
+(| Wallet | Purpose |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 708.00 Tm
+(| --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 698.00 Tm
+(| Owner wallet | Holds DEFAULT_ADMIN_ROLE. Use for name changes, asset/protocol allowlist changes, receiver setup, and) Tj
+/F3 7.2 Tf
+1 0 0 1 54 688.00 Tm
+(    granting/revoking asset managers. Prefer a hardware wallet or multisig. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 678.00 Tm
+(| Asset manager wallet | Holds ASSET_MANAGER_ROLE. Use for trading, lending, staking, liquidity, and operational) Tj
+/F3 7.2 Tf
+1 0 0 1 54 668.00 Tm
+(    transactions. Keep enough ETH for gas. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 658.00 Tm
+(| Public caller | Some actions, such as payReceiver, may be callable by anyone unless receiver configuration restricts) Tj
+/F3 7.2 Tf
+1 0 0 1 54 648.00 Tm
+(    the trigger address. |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 638.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 631.00 Tm
+(Do not grant ASSET_MANAGER_ROLE to the same address as the owner if the vault contract) Tj
+/F2 9.5 Tf
+1 0 0 1 54 618.00 Tm
+(  rejects owner and asset manager equality.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 605.00 Tm
+() Tj
+/F1 14 Tf
+1 0 0 1 54 588.00 Tm
+(4. Create a Vault on Etherscan) Tj
+/F2 9.5 Tf
+1 0 0 1 54 565.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 558.00 Tm
+(1. Open the factory page:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 545.00 Tm
+(   https://etherscan.io/address/0x0000000094B81677434600b69d739Bc62b66a9c3#writeContract) Tj
+/F2 9.5 Tf
+1 0 0 1 54 532.00 Tm
+(2. Click Connect to Web3.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 519.00 Tm
+(3. Connect the deployer wallet. The mainnet skill uses the asset manager wallet as the) Tj
+/F2 9.5 Tf
+1 0 0 1 54 506.00 Tm
+(  transaction sender.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 493.00 Tm
+(4. Find deployVaultAllSelected.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 480.00 Tm
+(5. Fill the fields:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 467.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 460.00 Tm
+(| Field | Value |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 450.00 Tm
+(| --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 440.00 Tm
+(| owner | Owner wallet address |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 430.00 Tm
+(| name | Vault display name, or blank string |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 420.00 Tm
+(| assetManagers | Asset manager wallet address as an array, for example [0xYourAssetManagerAddress] |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 410.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 403.00 Tm
+(deployVaultAllSelected uses the factory's selected/default mainnet asset and protocol) Tj
+/F2 9.5 Tf
+1 0 0 1 54 390.00 Tm
+(  configuration. Use deployVaultWithSelected only if you need to provide custom asset or) Tj
+/F2 9.5 Tf
+1 0 0 1 54 377.00 Tm
+(  protocol arrays manually.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 364.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 357.00 Tm
+(6. Submit the transaction and wait for confirmation.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 344.00 Tm
+(7. Copy the transaction hash and open it on Etherscan.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 331.00 Tm
+(8. Compute or find the vault address:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 318.00 Tm
+(   - On the factory Read Contract tab, call computeVaultAddress\(owner,name\).) Tj
+/F2 9.5 Tf
+1 0 0 1 54 305.00 Tm
+(   - Use the exact owner address and exact vault name used in deployVaultAllSelected.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 292.00 Tm
+(   - Open https://etherscan.io/address/<vault_address>.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 279.00 Tm
+() Tj
+/F1 14 Tf
+1 0 0 1 54 262.00 Tm
+(5. Verify a New Vault) Tj
+/F2 9.5 Tf
+1 0 0 1 54 239.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 232.00 Tm
+(On the vault contract page, use Read Contract:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 219.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 212.00 Tm
+(| Function | Expected result |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 202.00 Tm
+(| --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 192.00 Tm
+(| name\(\) | The vault display name. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 182.00 Tm
+(| getAssets\(\) | WETH and WBTC by default. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 172.00 Tm
+(| getStableCoins\(\) | USDC, USDT, and USDS by default. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 162.00 Tm
+(| getLendingProtocols\(\) | Aave V3 protocol address. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 152.00 Tm
+(| getStakingProtocols\(\) | Lido V2 protocol address. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 142.00 Tm
+(| getAMMProtocols\(\) | Uniswap V3 protocol address. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 132.00 Tm
+(| hasRole\(ASSET_MANAGER_ROLE, asset_manager\) | true for the chosen asset manager. |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 122.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 115.00 Tm
+(For wallet balances, open each token contract, use Read Contract, and call) Tj
+/F2 9.5 Tf
+1 0 0 1 54 102.00 Tm
+(  balanceOf\(vault_address\). Convert raw units by token decimals.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 89.00 Tm
+() Tj
+/F2 8 Tf
+1 0 0 1 54 30 Tm
+(BittyVault Mainnet Etherscan Guide - Page 2 of 5) Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 4795 >>
+stream
+BT
+/F1 14 Tf
+1 0 0 1 54 728.00 Tm
+(6. Fund the Vault) Tj
+/F2 9.5 Tf
+1 0 0 1 54 705.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 698.00 Tm
+(The mainnet skill funds with WETH:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 685.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 678.00 Tm
+(1. From an ETH-funded wallet, open WETH:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 665.00 Tm
+(   https://etherscan.io/address/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2#writeContract) Tj
+/F2 9.5 Tf
+1 0 0 1 54 652.00 Tm
+(2. Connect the wallet.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 639.00 Tm
+(3. Call deposit\(\) and enter the ETH amount in the transaction value field if Etherscan) Tj
+/F2 9.5 Tf
+1 0 0 1 54 626.00 Tm
+(  exposes a payable value input.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 613.00 Tm
+(4. After wrapping, call WETH transfer\(vault_address, amount_raw\).) Tj
+/F2 9.5 Tf
+1 0 0 1 54 600.00 Tm
+(5. Verify by calling WETH balanceOf\(vault_address\).) Tj
+/F2 9.5 Tf
+1 0 0 1 54 587.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 580.00 Tm
+(Raw amount examples:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 567.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 560.00 Tm
+(| Human amount | Token | Raw amount |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 550.00 Tm
+(| --- | --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 540.00 Tm
+(| 0.01 | WETH | 10000000000000000 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 530.00 Tm
+(| 1 | WETH | 1000000000000000000 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 520.00 Tm
+(| 100 | USDC | 100000000 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 510.00 Tm
+(| 100 | USDT | 100000000 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 500.00 Tm
+(| 0.01 | WBTC | 1000000 |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 490.00 Tm
+() Tj
+/F1 14 Tf
+1 0 0 1 54 473.00 Tm
+(7. Owner Management Actions) Tj
+/F2 9.5 Tf
+1 0 0 1 54 450.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 443.00 Tm
+(Use the owner wallet on the vault Write Contract tab.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 430.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 423.00 Tm
+(| Action | Function | Inputs |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 413.00 Tm
+(| --- | --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 403.00 Tm
+(| Set name | setName | New display name. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 393.00 Tm
+(| Add assets | addAssets | Array of token addresses. Check isAddingAssetsDisabled\(\) first. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 383.00 Tm
+(| Remove assets | removeAssets | Array of token addresses. Check current getAssets\(\) and getStableCoins\(\) first. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 373.00 Tm
+(| Lock assets | disableAddingAssets | No inputs. Irreversible. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 363.00 Tm
+(| Add lending protocols | addLendingProtocols | Array of protocol addresses. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 353.00 Tm
+(| Add staking protocols | addStakingProtocols | Array of protocol addresses. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 343.00 Tm
+(| Add AMM protocols | addAMMProtocols | Array of protocol addresses. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 333.00 Tm
+(| Remove protocols | matching remove function | Array of protocol addresses. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 323.00 Tm
+(| Lock protocols | disableAddingProtocols | No inputs. Irreversible. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 313.00 Tm
+(| Grant asset manager | grantRole | Role hash and address. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 303.00 Tm
+(| Revoke asset manager | revokeRole | Role hash and address. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 293.00 Tm
+(| Set rebalance limits | setRebalanceConfig | Asset, minimum balance, minimum duration, maximum amount. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 283.00 Tm
+(| Set receiver protection | setReceiverProtectionDuration | Duration in seconds. |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 273.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 266.00 Tm
+(Before writing, use Read Contract to inspect the relevant current state. After writing,) Tj
+/F2 9.5 Tf
+1 0 0 1 54 253.00 Tm
+(  refresh the same read function and confirm the transaction on Etherscan.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 240.00 Tm
+() Tj
+/F1 14 Tf
+1 0 0 1 54 223.00 Tm
+(8. Receiver Payments) Tj
+/F2 9.5 Tf
+1 0 0 1 54 200.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 193.00 Tm
+(Use the owner wallet for receiver setup.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 180.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 173.00 Tm
+(addReceiver fields from the mainnet skill:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 160.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 153.00 Tm
+(| Field | Meaning |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 143.00 Tm
+(| --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 133.00 Tm
+(| name | Receiver identifier. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 123.00 Tm
+(| receiver_address | Payment destination. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 113.00 Tm
+(| asset | Token symbol or token address. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 103.00 Tm
+(| amount | Human amount converted to raw units. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 93.00 Tm
+(| payment_count | Number of payments. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 83.00 Tm
+(| start_timestamp | Unix timestamp when payments begin. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 73.00 Tm
+(| duration_seconds | Payment interval or total duration as expected by the vault ABI. |) Tj
+/F2 8 Tf
+1 0 0 1 54 30 Tm
+(BittyVault Mainnet Etherscan Guide - Page 3 of 5) Tj
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 4827 >>
+stream
+BT
+/F3 7.2 Tf
+1 0 0 1 54 738.00 Tm
+(| trigger | Optional trigger address. Use 0x0000000000000000000000000000000000000000 if unrestricted. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 728.00 Tm
+(| immutable | Whether receiver config can be changed. |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 718.00 Tm
+(| pay_insufficient | Whether to pay available balance if full amount is unavailable. |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 708.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 701.00 Tm
+(To pay a receiver, use payReceiver\(name, amount_raw\) if the vault exposes that function. A) Tj
+/F2 9.5 Tf
+1 0 0 1 54 688.00 Tm
+(  public caller can submit the transaction unless the receiver has a trigger restriction.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 675.00 Tm
+() Tj
+/F1 14 Tf
+1 0 0 1 54 658.00 Tm
+(9. Asset Manager Operations) Tj
+/F2 9.5 Tf
+1 0 0 1 54 635.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 628.00 Tm
+(Use the asset manager wallet on the vault Write Contract tab.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 615.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 608.00 Tm
+(| Operation | Function | Mainnet protocol |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 598.00 Tm
+(| --- | --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 588.00 Tm
+(| Swap | rebalance | Uniswap V3: 0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 578.00 Tm
+(| Supply | supply | Aave V3: 0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 568.00 Tm
+(| Withdraw | withdraw | Aave V3: 0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 558.00 Tm
+(| Stake | stake | Lido V2: 0x4115bB297f21247FC55FD6255f0F8800d4172AF7 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 548.00 Tm
+(| Request unstake | unstake | Lido V2: 0x4115bB297f21247FC55FD6255f0F8800d4172AF7 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 538.00 Tm
+(| Claim unstaked | claimUnstaked | Lido V2: 0x4115bB297f21247FC55FD6255f0F8800d4172AF7 |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 528.00 Tm
+(| Add liquidity | addLiquidity | Uniswap V3 protocol adapter |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 518.00 Tm
+(| Remove liquidity | removeLiquidity | Uniswap V3 protocol adapter |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 508.00 Tm
+(| Claim fees | claimFees | Uniswap V3 protocol adapter |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 498.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 491.00 Tm
+(For swaps and Uniswap liquidity operations, Etherscan may require encoded bytes data. The) Tj
+/F2 9.5 Tf
+1 0 0 1 54 478.00 Tm
+(  mainnet skills build those bytes with Foundry cast. Generate the encoded payload locally,) Tj
+/F2 9.5 Tf
+1 0 0 1 54 465.00 Tm
+(  then paste the bytes into Etherscan.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 452.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 445.00 Tm
+(Swap data shape used by the skill:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 432.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 425.00 Tm
+() Tj
+/F3 7.5 Tf
+1 0 0 1 54 418.00 Tm
+(f\(address,uint256,address,uint256,bytes\)) Tj
+/F3 7.5 Tf
+1 0 0 1 54 408.00 Tm
+(tokenIn, amountInRaw, tokenOut, amountOutMinRaw, path) Tj
+/F2 9.5 Tf
+1 0 0 1 54 398.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 391.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 384.00 Tm
+(Uniswap V3 path format:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 371.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 364.00 Tm
+() Tj
+/F3 7.5 Tf
+1 0 0 1 54 357.00 Tm
+(0x + tokenIn_without_0x + fee_as_3_byte_hex + tokenOut_without_0x) Tj
+/F2 9.5 Tf
+1 0 0 1 54 347.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 340.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 333.00 Tm
+(Common fee tiers:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 320.00 Tm
+() Tj
+/F3 7.2 Tf
+1 0 0 1 54 313.00 Tm
+(| Fee tier | Percent |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 303.00 Tm
+(| --- | --- |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 293.00 Tm
+(| 100 | 0.01% |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 283.00 Tm
+(| 500 | 0.05% |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 273.00 Tm
+(| 3000 | 0.30% |) Tj
+/F3 7.2 Tf
+1 0 0 1 54 263.00 Tm
+(| 10000 | 1.00% |) Tj
+/F2 9.5 Tf
+1 0 0 1 54 253.00 Tm
+() Tj
+/F1 14 Tf
+1 0 0 1 54 236.00 Tm
+(10. Operational Checklist) Tj
+/F2 9.5 Tf
+1 0 0 1 54 213.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 206.00 Tm
+(Before every mainnet write:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 193.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 186.00 Tm
+(- Confirm the browser is on etherscan.io, not a testnet explorer or lookalike.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 173.00 Tm
+(- Confirm the connected wallet is the correct owner or asset manager wallet.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 160.00 Tm
+(- Confirm the contract address is the factory or the intended vault.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 147.00 Tm
+(- Confirm raw token amounts and decimals.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 134.00 Tm
+(- Run the matching Read Contract check first.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 121.00 Tm
+(- Simulate or dry-run with tooling when the action has complex bytes or meaningful slippage) Tj
+/F2 9.5 Tf
+1 0 0 1 54 108.00 Tm
+(  risk.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 95.00 Tm
+(- Keep the Etherscan transaction link in the operations log.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 82.00 Tm
+() Tj
+/F2 9.5 Tf
+1 0 0 1 54 75.00 Tm
+(After every write:) Tj
+/F2 9.5 Tf
+1 0 0 1 54 62.00 Tm
+() Tj
+/F2 8 Tf
+1 0 0 1 54 30 Tm
+(BittyVault Mainnet Etherscan Guide - Page 4 of 5) Tj
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 540 >>
+stream
+BT
+/F2 9.5 Tf
+1 0 0 1 54 738.00 Tm
+(- Wait for the transaction to succeed.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 725.00 Tm
+(- Re-run the relevant Read Contract function.) Tj
+/F2 9.5 Tf
+1 0 0 1 54 712.00 Tm
+(- Check token balances with balanceOf\(vault_address\).) Tj
+/F2 9.5 Tf
+1 0 0 1 54 699.00 Tm
+(- For role changes, call hasRole\(role_hash, address\).) Tj
+/F2 9.5 Tf
+1 0 0 1 54 686.00 Tm
+(- For Uniswap V3 positions, save the NFT token ID from transaction logs.) Tj
+/F2 8 Tf
+1 0 0 1 54 30 Tm
+(BittyVault Mainnet Etherscan Guide - Page 5 of 5) Tj
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 14 0 R >>
+endobj
+xref
+0 16
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000148 00000 n 
+0000000223 00000 n 
+0000000293 00000 n 
+0000000361 00000 n 
+0000004751 00000 n 
+0000004897 00000 n 
+0000009667 00000 n 
+0000009813 00000 n 
+0000014661 00000 n 
+0000014809 00000 n 
+0000019689 00000 n 
+0000019837 00000 n 
+0000020429 00000 n 
+trailer
+<< /Size 16 /Root 1 0 R >>
+startxref
+20577
+%%EOF

@@ -40,7 +40,6 @@ CoW Swap intent protocol (mainnet): `0xBB75486D48d93023DC377746e1d0be1D81C2a037`
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ```
@@ -50,7 +49,7 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ```bash
 INTENT_PROTOCOL=0xBB75486D48d93023DC377746e1d0be1D81C2a037
 cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 If `$INTENT_PROTOCOL` not in result, stop: "Error: CoW Swap protocol not registered. Run /add-protocols intent 0xBB75486D48d93023DC377746e1d0be1D81C2a037"
@@ -60,7 +59,7 @@ If `$INTENT_PROTOCOL` not in result, stop: "Error: CoW Swap protocol not registe
 Match symbols against the table. If raw address, fetch decimals:
 
 ```bash
-cast call <address> "decimals()(uint8)" --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+cast call <address> "decimals()(uint8)" --rpc-url "<rpc_url>"
 ```
 
 Compute derived values:
@@ -75,7 +74,7 @@ Stop if `min_part_limit == 0`.
 
 ```bash
 cast call <from_asset_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 If balance < `total_sell_raw`, stop with an insufficient balance error.
@@ -108,7 +107,7 @@ cast send $VAULT_ADDRESS \
   "<n_parts>" \
   "<interval>" \
   "<span>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 

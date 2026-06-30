@@ -27,7 +27,6 @@ UniswapV3 NonfungiblePositionManager (mainnet): `0xC36442b4a4522E871399CD717aBDD
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
@@ -38,7 +37,7 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-va
 cast call 0xC36442b4a4522E871399CD717aBDD847Ab11FE88 \
   "positions(uint256)(uint96,address,address,address,uint24,int24,int24,uint128,uint256,uint256,uint128,uint128)" \
   "<token_id>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Extract:
@@ -68,10 +67,10 @@ DEADLINE=$(( $(date +%s) + <deadline_minutes> * 60 ))
 
 ```bash
 cast call <token0_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 
 cast call <token1_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Save as `<balance0_before>` and `<balance1_before>`.
@@ -115,7 +114,7 @@ cast send $VAULT_ADDRESS \
   "removeLiquidity(address,bytes)" \
   "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "$DATA" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -127,10 +126,10 @@ Fetch vault token balances after the tx:
 
 ```bash
 cast call <token0_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 
 cast call <token1_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Print:

@@ -34,7 +34,6 @@ Staking protocol (Lido V2): `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7`
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
@@ -46,7 +45,7 @@ If `<asset>` starts with `0x`, use it directly — then fetch its decimals:
 
 ```bash
 cast call <asset_address> "decimals()(uint8)" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 ### 3. Fetch current staked balance
@@ -56,7 +55,7 @@ cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
   "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
   "<asset_address>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Save as `<staked_balance>`.
@@ -85,7 +84,7 @@ Error: Unstake amount exceeds staked balance.
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
   "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Save as `<request_ids_before>`.
@@ -119,7 +118,7 @@ cast send $VAULT_ADDRESS \
   "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
   "<asset_address>" \
   "<amount_raw>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -131,7 +130,7 @@ If the transaction reverts, print the revert reason and stop.
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
   "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Save as `<request_ids_after>`. The new IDs are those in `<request_ids_after>` that were not in `<request_ids_before>`.

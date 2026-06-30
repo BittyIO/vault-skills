@@ -19,7 +19,6 @@ Staking protocol: `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C`
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
 
@@ -27,10 +26,10 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-va
 
 ```bash
 cast call $VAULT_ADDRESS "getAssets()(address[])" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 
 cast call $VAULT_ADDRESS "getStableCoins()(address[])" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Combine both lists into a single list of token addresses to inspect. Label each as `asset` or `stablecoin`.
@@ -43,7 +42,7 @@ For every token address in the combined list, run the following in parallel:
 ```bash
 cast call <token_address> \
   "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 **Supplied balance (Aave):**
@@ -52,7 +51,7 @@ cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
   "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
   "<token_address>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 **Staked balance (Lido):**
@@ -61,16 +60,16 @@ cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   "<token_address>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 **Token decimals and symbol** (to display human-readable amounts):
 ```bash
 cast call <token_address> "decimals()(uint8)" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 
 cast call <token_address> "symbol()(string)" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Convert each raw balance to human-readable by dividing by `10^decimals`. Show at least 4 significant decimal places.
@@ -105,7 +104,7 @@ Finally print a pending unstake section if there are any:
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 If the result is non-empty, print:

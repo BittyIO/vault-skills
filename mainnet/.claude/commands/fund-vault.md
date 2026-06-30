@@ -25,7 +25,6 @@ Parse first token as optional `<amount>` (default `0.01`).
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
@@ -34,7 +33,7 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-va
 
 ```bash
 ASSET_MANAGER=$(cast wallet address --private-key "$PRIVATE_KEY")
-cast balance "$ASSET_MANAGER" --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+cast balance "$ASSET_MANAGER" --rpc-url "<rpc_url>"
 ```
 
 Convert `<amount>` to wei:
@@ -70,19 +69,19 @@ If no, stop.
 ```bash
 cast send 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 \
   "deposit()" --value "$AMOUNT_RAW" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 
 cast send 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 \
   "transfer(address,uint256)" "$VAULT_ADDRESS" "$AMOUNT_RAW" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 ### 5. Verify vault balance
 
 ```bash
-cast call 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 "balanceOf(address)(uint256)" "$VAULT_ADDRESS" --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+cast call 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 "balanceOf(address)(uint256)" "$VAULT_ADDRESS" --rpc-url "<rpc_url>"
 ```
 
 Print:

@@ -27,7 +27,6 @@ Parse first token as optional `<amount_each>` (default `0.01`).
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
@@ -36,7 +35,7 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-va
 
 ```bash
 ASSET_MANAGER=$(cast wallet address --private-key "$PRIVATE_KEY")
-cast balance "$ASSET_MANAGER" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+cast balance "$ASSET_MANAGER" --rpc-url "<rpc_url>"
 ```
 
 Convert `<amount_each>` to wei:
@@ -72,12 +71,12 @@ If no, stop.
 ```bash
 cast send 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 \
   "deposit()" --value "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 
 cast send 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 \
   "transfer(address,uint256)" "$VAULT_ADDRESS" "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -86,12 +85,12 @@ cast send 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 \
 ```bash
 cast send 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14 \
   "deposit()" --value "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 
 cast send 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14 \
   "transfer(address,uint256)" "$VAULT_ADDRESS" "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -100,21 +99,21 @@ cast send 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14 \
 ```bash
 cast send 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c \
   "deposit()" --value "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 
 cast send 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c \
   "transfer(address,uint256)" "$VAULT_ADDRESS" "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 ### 7. Verify vault balances
 
 ```bash
-cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" "$VAULT_ADDRESS" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
-cast call 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14 "balanceOf(address)(uint256)" "$VAULT_ADDRESS" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
-cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" "$VAULT_ADDRESS" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" "$VAULT_ADDRESS" --rpc-url "<rpc_url>"
+cast call 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14 "balanceOf(address)(uint256)" "$VAULT_ADDRESS" --rpc-url "<rpc_url>"
+cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" "$VAULT_ADDRESS" --rpc-url "<rpc_url>"
 ```
 
 Print:

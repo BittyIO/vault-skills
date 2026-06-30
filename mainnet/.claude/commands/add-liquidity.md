@@ -43,7 +43,6 @@ AMM protocol (UniswapV3): `0x1ee9040bD2E2418a4CbC8754865D595920EF9301`
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
@@ -98,10 +97,10 @@ DATA=$(cast abi-encode "f(bool,bytes)" "true" "$MINT_PARAMS")
 
 ```bash
 cast call <token0_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 
 cast call <token1_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Stop if either balance < the requested amount.
@@ -135,7 +134,7 @@ cast send $VAULT_ADDRESS \
   "<token0_address>" "<amount0_raw>" \
   "<token1_address>" "<amount1_raw>" \
   "$DATA" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -151,7 +150,7 @@ Print tx hash and Etherscan link. Remind the user to save the NFT token ID from 
 cast call 0xC36442b4a4522E871399CD717aBDD847Ab11FE88 \
   "positions(uint256)(uint96,address,address,address,uint24,int24,int24,uint128,uint256,uint256,uint128,uint128)" \
   "<token_id>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 The Uniswap V3 NonfungiblePositionManager on mainnet is `0xC36442b4a4522E871399CD717aBDD847Ab11FE88`.

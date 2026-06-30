@@ -42,7 +42,6 @@ UniswapV3 NonfungiblePositionManager (Sepolia): `0x1238536071E1c677A632429e3655c
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}"
 ```
 
 Print the demo plan to the user:
@@ -176,7 +175,7 @@ Wait for the user to enter done before proceeding.
 Then check the asset manager ETH balance and print it:
 ```bash
 cast balance <asset_manager_address> \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Print: `✓ Balance confirmed: <balance> wei`
@@ -193,7 +192,7 @@ cast send 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
   "<owner>" \
   "<vault_name>" \
   "[<asset_manager_address>]" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -202,7 +201,7 @@ Compute the vault address:
 cast call 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Save as `<vault_address>`. Write `VAULT_ADDRESS=<vault_address>` to `.env`.
@@ -223,7 +222,7 @@ Print: `[4/15] Funding vault — wrapping ETH into WETH, WETH_UNI, WETH_AAVE...`
 Check asset manager ETH balance:
 ```bash
 ASSET_MANAGER=$(cast wallet address --private-key "$PRIVATE_KEY")
-cast balance "$ASSET_MANAGER" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+cast balance "$ASSET_MANAGER" --rpc-url "<rpc_url>"
 ```
 
 If balance < `<demo_amount * 3>` ETH (in wei), stop and print:
@@ -241,21 +240,21 @@ Wrap and transfer each token to the vault:
 ```bash
 # WETH
 cast send 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "deposit()" --value "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" --private-key "$PRIVATE_KEY"
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 cast send 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "transfer(address,uint256)" "$VAULT_ADDRESS" "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" --private-key "$PRIVATE_KEY"
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 
 # WETH_UNI
 cast send 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14 "deposit()" --value "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" --private-key "$PRIVATE_KEY"
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 cast send 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14 "transfer(address,uint256)" "$VAULT_ADDRESS" "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" --private-key "$PRIVATE_KEY"
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 
 # WETH_AAVE
 cast send 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "deposit()" --value "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" --private-key "$PRIVATE_KEY"
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 cast send 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "transfer(address,uint256)" "$VAULT_ADDRESS" "$AMOUNT_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" --private-key "$PRIVATE_KEY"
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 ```
 
 Print:
@@ -279,8 +278,8 @@ WETH_RAW=$(cast to-unit <demo_amount>ether wei)
 
 Capture balances before:
 ```bash
-WETH_BEFORE=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-USDC_BEFORE=$(cast call 0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_BEFORE=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+USDC_BEFORE=$(cast call 0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Build UniswapV3 path (WETH → USDC, fee 3000):
@@ -309,14 +308,14 @@ cast send <vault_address> \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "$WETH_RAW" "1" "$DATA" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Capture balances after and save `<usdc_balance>`:
 ```bash
-WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-USDC_AFTER=$(cast call 0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+USDC_AFTER=$(cast call 0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -360,14 +359,14 @@ cast send <vault_address> \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "$USDC_BEFORE" "1" "$DATA" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Capture balances after:
 ```bash
-WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-USDC_AFTER=$(cast call 0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+USDC_AFTER=$(cast call 0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -388,8 +387,8 @@ Note: USDC is frozen on Aave Sepolia (error 51). Use WETH_AAVE (`0xC558DBdd85650
 
 Capture balances before:
 ```bash
-WETH_AAVE_WALLET_BEFORE=$(cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-WETH_AAVE_SUPPLIED_BEFORE=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_AAVE_WALLET_BEFORE=$(cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+WETH_AAVE_SUPPLIED_BEFORE=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Supply `<demo_amount>` WETH_AAVE:
@@ -400,14 +399,14 @@ cast send <vault_address> \
   "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
   "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" \
   "$SUPPLY_AMT" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Capture balances after:
 ```bash
-WETH_AAVE_WALLET_AFTER=$(cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-WETH_AAVE_SUPPLIED_AFTER=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_AAVE_WALLET_AFTER=$(cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+WETH_AAVE_SUPPLIED_AFTER=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -436,21 +435,21 @@ SUPPLIED=$(cast call <vault_address> \
   "getSuppliedBalance(address,address)(uint256)" \
   "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
   "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+  --rpc-url "<rpc_url>" | awk '{print $1}')
 
 cast send <vault_address> \
   "withdraw(address,address,uint256)" \
   "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
   "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" \
   "$SUPPLIED" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Capture balances after:
 ```bash
-WETH_AAVE_WALLET_AFTER=$(cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-WETH_AAVE_SUPPLIED_AFTER=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_AAVE_WALLET_AFTER=$(cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+WETH_AAVE_SUPPLIED_AFTER=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -469,8 +468,8 @@ Print: `[9/15] Staking <demo_amount> WETH in Lido...`
 
 Capture balances before:
 ```bash
-WETH_BEFORE=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-LIDO_STAKED_BEFORE=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_BEFORE=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+LIDO_STAKED_BEFORE=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 ```bash
@@ -479,14 +478,14 @@ cast send <vault_address> \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "$WETH_RAW" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Capture balances after:
 ```bash
-WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-LIDO_STAKED_AFTER=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+LIDO_STAKED_AFTER=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -507,7 +506,7 @@ First check if the Lido withdrawal queue is paused (known Sepolia limitation):
 ```bash
 UNSTETH=0x1583C7b3f4C3B008720E6BcE5726336b0aB25fdd
 IS_PAUSED=$(cast call $UNSTETH "isPaused()(bool)" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+  --rpc-url "<rpc_url>")
 ```
 
 If `IS_PAUSED` is `true`, skip this step and step 10. Print:
@@ -526,26 +525,26 @@ STAKED=$(cast call <vault_address> \
   "getStakedBalance(address,address)(uint256)" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+  --rpc-url "<rpc_url>" | awk '{print $1}')
 
 cast send <vault_address> \
   "unstake(address,address,uint256)" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "$STAKED" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Capture balances after and fetch pending request IDs:
 ```bash
-WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-LIDO_STAKED_AFTER=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+LIDO_STAKED_AFTER=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "<rpc_url>" | awk '{print $1}')
 
 cast call <vault_address> \
   "getUnstakeRequestIds(address)(uint256[])" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Print:
@@ -577,7 +576,7 @@ cast call <vault_address> \
   "claimUnstaked(address,uint256[])" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   "<request_ids_array>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --from "$(cast wallet address --private-key $PRIVATE_KEY)"
 ```
 
@@ -592,13 +591,13 @@ cast send <vault_address> \
   "claimUnstaked(address,uint256[])" \
   "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   "<request_ids_array>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Capture WETH after:
 ```bash
-WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -621,8 +620,8 @@ TOKEN1=0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14  # WETH_UNI
 AMOUNT0_RAW=$(cast to-unit <demo_amount>ether wei)
 AMOUNT1_RAW=$(cast to-unit <demo_amount>ether wei)
 
-TOKEN0_BEFORE=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-TOKEN1_BEFORE=$(cast call $TOKEN1 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+TOKEN0_BEFORE=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+TOKEN1_BEFORE=$(cast call $TOKEN1 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 If either balance is less than the required amount, skip steps 12-15 and note "⏭ Skipped — insufficient WETH_AAVE/WETH_UNI balance" in the final summary.
@@ -654,7 +653,7 @@ cast send <vault_address> \
   "$TOKEN0" "$AMOUNT0_RAW" \
   "$TOKEN1" "$AMOUNT1_RAW" \
   "$DATA" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -662,8 +661,8 @@ Find the new position's NFT ID: in the transaction logs, locate the ERC721 `Tran
 
 Capture balances after:
 ```bash
-TOKEN0_AFTER=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-TOKEN1_AFTER=$(cast call $TOKEN1 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+TOKEN0_AFTER=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+TOKEN1_AFTER=$(cast call $TOKEN1 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -685,7 +684,7 @@ Print: `[13/15] Swapping remaining WETH_AAVE through the pool to generate fees f
 Check remaining WETH_AAVE balance in vault:
 ```bash
 SWAP_AMT=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+  --rpc-url "<rpc_url>" | awk '{print $1}')
 echo "WETH_AAVE available to swap: $SWAP_AMT"
 ```
 
@@ -705,7 +704,7 @@ cast send <vault_address> \
   "marketSell(address,address,address,uint256,uint256,bytes)" \
   "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
   "$TOKEN0" "$TOKEN1" "$SWAP_AMT" "1" "$DATA" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -726,7 +725,7 @@ Print: `[14/15] Checking for AMM fees on position <lp_token_id>...`
 cast call 0x1238536071E1c677A632429e3655c799b22cDA52 \
   "positions(uint256)(uint96,address,address,address,uint24,int24,int24,uint128,uint256,uint256,uint128,uint128)" \
   "<lp_token_id>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Extract `tokensOwed0` (field index 10) and `tokensOwed1` (field index 11).
@@ -750,7 +749,7 @@ cast send <vault_address> \
   "claimAMMFees(address,bytes)" \
   "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
   "$DATA" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -774,14 +773,14 @@ Fetch current liquidity:
 LIQUIDITY=$(cast call 0x1238536071E1c677A632429e3655c799b22cDA52 \
   "positions(uint256)(uint96,address,address,address,uint24,int24,int24,uint128,uint256,uint256,uint128,uint128)" \
   "<lp_token_id>" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | sed -n '8p' | awk '{print $1}')
+  --rpc-url "<rpc_url>" | sed -n '8p' | awk '{print $1}')
 echo "Current liquidity: $LIQUIDITY"
 ```
 
 Capture balances before:
 ```bash
-TOKEN0_BEFORE=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-TOKEN1_BEFORE=$(cast call $TOKEN1 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+TOKEN0_BEFORE=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+TOKEN1_BEFORE=$(cast call $TOKEN1 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Compute deadline (10 minutes) and encode DecreaseLiquidityParams (remove 100%):
@@ -802,14 +801,14 @@ cast send <vault_address> \
   "removeLiquidity(address,bytes)" \
   "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
   "$DATA" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Capture balances after:
 ```bash
-TOKEN0_AFTER=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
-TOKEN1_AFTER=$(cast call $TOKEN1 "balanceOf(address)(uint256)" <vault_address> --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" | awk '{print $1}')
+TOKEN0_AFTER=$(cast call $TOKEN0 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
+TOKEN1_AFTER=$(cast call $TOKEN1 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:

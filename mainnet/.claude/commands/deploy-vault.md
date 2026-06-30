@@ -35,7 +35,6 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 Run the following and stop with a clear error if any are missing or empty:
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}"
 ```
 
@@ -71,7 +70,7 @@ cast send 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
   "<owner>" \
   "<vault_name>" \
   "[<asset_manager>]" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -83,7 +82,7 @@ If the transaction fails, print the revert reason and stop.
 cast call 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Save the output as `<vault_address>`.

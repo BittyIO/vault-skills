@@ -35,7 +35,6 @@ AMM protocol: `0x188487aECb5bB372f0B18fd983a0c8dcA9164227`
 ### 1. Check environment variables
 
 ```bash
-echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
@@ -46,7 +45,7 @@ Resolve both `<from_asset>` and `<to_asset>` using the table above or by fetchin
 
 ```bash
 cast call <asset_address> "decimals()(uint8)" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 ### 3. Convert amounts to raw units
@@ -61,7 +60,7 @@ Save as `<sell_amount_raw>` and `<buy_amount_min_raw>`.
 ```bash
 cast call <from_asset_address> \
   "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 If balance < `<sell_amount_raw>`, stop with:
@@ -120,7 +119,7 @@ cast send $VAULT_ADDRESS \
   "<sell_amount_raw>" \
   "<buy_amount_min_raw>" \
   "$DATA" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
+  --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
 ```
 
@@ -132,10 +131,10 @@ Check vault balances for both tokens after the tx:
 
 ```bash
 cast call <from_asset_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 
 cast call <to_asset_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+  --rpc-url "<rpc_url>"
 ```
 
 Print:
