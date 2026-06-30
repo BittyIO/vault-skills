@@ -16,21 +16,24 @@ Use `<rpc_url>` in all `cast` commands throughout the skill.
 
 If the user hits rate-limit errors on the free endpoint, suggest they get a free Alchemy key at https://www.alchemy.com/ and add it to `.env` as `ALCHEMY_KEY=<key>`.
 
-## Network selection — always ask first
+## Network selection — ask once at the start of every session
 
-**Before running any skill** (`/deploy-vault`, `/fund-vault`, `/supply`, etc.), ask the user:
+**At the very beginning of the conversation** (before the user runs any skill), greet the user and ask:
 
 ```
-Which network?
+Welcome to BittyVault Skills! Which network would you like to work on?
   [1] Sepolia (testnet — no real funds)
   [2] Mainnet (⚠ real ETH — transactions are irreversible)
 ```
 
-Then:
+Once the user answers:
 
-- **Sepolia**: proceed with the skill file as written (all Sepolia configs are in `.claude/commands/`). Load env from `sepolia/.env`.
-- **Mainnet**: print `⚠ You've selected Ethereum mainnet — all transactions use real funds and are irreversible.` Then read and follow `mainnet/.claude/commands/<skill_name>.md` instead of the default skill file. Load env from `mainnet/.env`.
+1. Save their choice to `.env` as `NETWORK=sepolia` or `NETWORK=mainnet`.
+2. Print a confirmation, e.g. `✓ Network set to Sepolia. Ready to run skills.`
+3. If **Mainnet** was chosen, also print: `⚠ All transactions will use real ETH and are irreversible. Double-check every address.`
 
-For example, if the user runs `/deploy-vault` and picks Mainnet, read `mainnet/.claude/commands/deploy-vault.md` and execute that instead.
+**For all subsequent skills in this session**, read `NETWORK` from `.env` and:
+- If `NETWORK=sepolia`: use the skill as written (Sepolia configs in `.claude/commands/`), load env from `sepolia/.env`.
+- If `NETWORK=mainnet`: read and follow `mainnet/.claude/commands/<skill_name>.md` instead, load env from `mainnet/.env`.
 
-Do not skip the network question even if the user seems to be in a hurry.
+Do not ask about network again during the session unless the user explicitly asks to switch networks.
