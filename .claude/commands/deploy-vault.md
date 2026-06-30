@@ -1,4 +1,4 @@
-Deploy a new BittyVault on Sepolia via the factory at `0x0000000094B81677434600b69d739Bc62b66a9c3`.
+Deploy a new BittyVault on Sepolia via the factory at `0x00000086892600a65782e5E1F11dedE2Eac0cB6c`.
 
 **Usage:** `/deploy-vault <owner_address> [vault_name]`
 
@@ -16,16 +16,17 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 | Role | Address |
 |------|---------|
-| Factory | `0x0000000094B81677434600b69d739Bc62b66a9c3` |
+| Factory | `0x00000086892600a65782e5E1F11dedE2Eac0cB6c` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
 | WETH_UNI | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
 | WETH_AAVE | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |
 | WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` |
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
-| Lending protocol | `0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44` |
-| Staking protocol | `0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1` |
-| AMM protocol | `0x3Dc6038190092a4FA62c5203D00410f07d2221a4` |
+| Lending (Aave V3) | `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80` |
+| Staking (Lido V2) | `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C` |
+| AMM (Uniswap V3) | `0x188487aECb5bB372f0B18fd983a0c8dcA9164227` |
+| Intent (CoW Swap V1) | `0x034ef104B0c483EB71Ba2aD91a1de6224AdF4F70` |
 
 ---
 
@@ -54,11 +55,8 @@ Show the user a summary table:
 - Vault name: `<vault_name>`
 - Asset manager: `<asset_manager>`
 - Network: Sepolia
-- Assets (non-stable): WETH, WETH_UNI, WETH_AAVE, WBTC
-- Stablecoins: USDT, USDC
-- Lending protocols: 1
-- Staking protocols: 1
-- AMM protocols: 1
+- Protocols: all guard-registered (Aave V3, Lido V2, Uniswap V3, CoW Swap V1)
+- Assets: all guard-registered (WETH, WETH_UNI, WETH_AAVE, WBTC, USDT, USDC)
 
 Ask: "Proceed with deployment? (yes/no)"
 
@@ -67,16 +65,11 @@ If the user says no, stop.
 ### 4. Deploy the vault
 
 ```bash
-cast send 0x0000000094B81677434600b69d739Bc62b66a9c3 \
-  "deployVault(address,string,address,address[],address[],address[],address[],address[])" \
+cast send 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
+  "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
-  "<asset_manager>" \
-  "[0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9,0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14,0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c,0x29f2D40B0605204364af54EC677bD022dA425d03]" \
-  "[0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0,0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8]" \
-  "[0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44]" \
-  "[0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1]" \
-  "[0x3Dc6038190092a4FA62c5203D00410f07d2221a4]" \
+  "[<asset_manager>]" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
 ```
@@ -86,7 +79,7 @@ If the transaction fails, print the revert reason and stop.
 ### 5. Compute and display the vault address
 
 ```bash
-cast call 0x0000000094B81677434600b69d739Bc62b66a9c3 \
+cast call 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"

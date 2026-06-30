@@ -1,0 +1,182 @@
+Create a CoW Swap TWAP sell order on a BittyVault on Sepolia. Splits the total sell amount into n equal parts executed at regular intervals. After registration you must post each part to CoW API when its window opens using `/post-twap-part`.
+
+**Usage:** `/twap-sell <from_asset> <to_asset> <total_sell> <min_per_part> <n_parts> <interval> [span]`
+
+- `<from_asset>` — token to sell: symbol (WETH, WBTC, USDT, USDC) or `0x…`
+- `<to_asset>` — token to receive: symbol or `0x…`
+- `<total_sell>` — total amount to sell across all parts (human-readable)
+- `<min_per_part>` — minimum receive amount per part (slippage floor per slot)
+- `<n_parts>` — number of parts (e.g. `7` for daily over a week)
+- `<interval>` — seconds between parts (e.g. `86400` for daily, `3600` for hourly)
+- `[span]` — execution window per slot in seconds (0 = full interval, default)
+
+Arguments: $ARGUMENTS
+
+Parse `$ARGUMENTS` as positional: from, to, total_sell, min_per_part, n, interval, optional span (default 0).
+If first 6 are missing, stop and print usage.
+
+---
+
+## Hardcoded Sepolia configuration
+
+| Symbol | Address | Decimals |
+|--------|---------|----------|
+| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
+| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
+| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
+| USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
+
+CoW Swap intent protocol (Sepolia): `0x034ef104B0c483EB71Ba2aD91a1de6224AdF4F70`
+CoW Swap explorer (Sepolia): `https://explorer.cow.fi/sepolia/`
+
+---
+
+## Steps
+
+### 1. Check environment variables
+
+```bash
+echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
+echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
+echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
+```
+
+### 2. Set intent protocol and verify registration
+
+```bash
+INTENT_PROTOCOL=0x034ef104B0c483EB71Ba2aD91a1de6224AdF4F70
+RPC="https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC"
+```
+
+If `$INTENT_PROTOCOL` is not in the result, stop: "Error: CoW Swap protocol not registered. Run /add-protocols intent 0x034ef104B0c483EB71Ba2aD91a1de6224AdF4F70"
+
+### 3. Get APP_DATA and clone address
+
+```bash
+APP_DATA=$(cast call $INTENT_PROTOCOL "APP_DATA()(bytes32)" --rpc-url "$RPC")
+CLONE=$(cast call $VAULT_ADDRESS "getClone(address)(address)" "$INTENT_PROTOCOL" --rpc-url "$RPC")
+```
+
+### 4. Resolve asset addresses and decimals
+
+Match symbols against the table. If raw address, fetch decimals:
+
+```bash
+cast call <address> "decimals()(uint8)" --rpc-url "$RPC"
+```
+
+### 5. Convert amounts to raw units and validate
+
+- `<total_sell_raw>` and `<min_per_part_raw>` in token decimals
+- Example (18d): `cast to-unit <amount>ether wei`
+- Example (6d): `python3 -c "print(int(<amount> * 1e6))"`
+- Validate: `<n_parts>` > 0, `<interval>` > 0, `total_sell_raw / n_parts` > 0
+
+### 6. Check vault balance
+
+```bash
+cast call <from_asset_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS --rpc-url "$RPC"
+```
+
+If balance < `<total_sell_raw>`, stop with an insufficient balance error.
+
+### 7. Show preview and ask for confirmation
+
+```
+CoW Swap TWAP sell order
+Vault            : $VAULT_ADDRESS
+Sell total       : <total_sell> <from_symbol> (split into <n_parts> parts)
+Sell per part    : <total_sell/n_parts> <from_symbol>
+Receive (min/part): <min_per_part> <to_symbol>
+Interval         : <interval>s between parts
+Span             : <span>s execution window per slot (0 = full slot)
+Total duration   : ~<human duration>
+Intent protocol  : $INTENT_PROTOCOL
+```
+
+Ask: "Create TWAP sell order? (yes/no)" — if no, stop.
+
+### 8. Simulate to get twapId, then execute on-chain
+
+```bash
+ASSET_MANAGER=$(cast wallet address --private-key "$PRIVATE_KEY")
+
+TWAP_ID=$(cast call $VAULT_ADDRESS \
+  "twapSell(address,address,address,uint256,uint256,uint256,uint256,uint256)(bytes32)" \
+  "$INTENT_PROTOCOL" "<from_asset_address>" "<to_asset_address>" \
+  "<total_sell_raw>" "<min_per_part_raw>" "<n_parts>" "<interval>" "<span>" \
+  --from "$ASSET_MANAGER" --rpc-url "$RPC")
+
+TX_HASH=$(cast send $VAULT_ADDRESS \
+  "twapSell(address,address,address,uint256,uint256,uint256,uint256,uint256)" \
+  "$INTENT_PROTOCOL" "<from_asset_address>" "<to_asset_address>" \
+  "<total_sell_raw>" "<min_per_part_raw>" "<n_parts>" "<interval>" "<span>" \
+  --rpc-url "$RPC" --private-key "$PRIVATE_KEY" \
+  --json | python3 -c "import json,sys; print(json.load(sys.stdin)['transactionHash'])")
+```
+
+### 9. Post part 0 to CoW API immediately
+
+```bash
+START_TIME=$(python3 -c "import time; print(int(time.time()))")
+SELL_PER_PART=$(python3 -c "print(<total_sell_raw> // <n_parts>)")
+EFFECTIVE_SPAN=$(python3 -c "s=<span>; d=<interval>; print(s if s > 0 else d)")
+PART0_VALID_TO=$(python3 -c "print($START_TIME + $EFFECTIVE_SPAN)")
+
+JSON_BODY=$(python3 -c "
+import json
+print(json.dumps({
+    'sellToken': '<from_asset_address>',
+    'buyToken': '<to_asset_address>',
+    'receiver': '$VAULT_ADDRESS',
+    'sellAmount': str($SELL_PER_PART),
+    'buyAmount': '<min_per_part_raw>',
+    'validTo': $PART0_VALID_TO,
+    'appData': '$APP_DATA',
+    'feeAmount': '0',
+    'kind': 'sell',
+    'partiallyFillable': False,
+    'signingScheme': 'eip1271',
+    'signature': '0x',
+    'from': '$VAULT_ADDRESS',
+    'sellTokenBalance': 'erc20',
+    'buyTokenBalance': 'erc20'
+}))
+")
+
+COW_RESPONSE=$(curl -s -X POST "https://api.cow.fi/sepolia/api/v1/orders" \
+  -H "Content-Type: application/json" \
+  -d "$JSON_BODY")
+
+COW_UID=$(python3 -c "
+import json, sys
+resp = '$COW_RESPONSE'
+try:
+    parsed = json.loads(resp)
+    if isinstance(parsed, str):
+        print(parsed)
+    else:
+        print('COW_API_ERROR: ' + json.dumps(parsed), flush=True)
+except:
+    print('COW_PARSE_ERROR: ' + resp, flush=True)
+")
+```
+
+If `COW_UID` starts with `COW_API_ERROR` or `COW_PARSE_ERROR`, print the error and stop.
+
+### 10. Show result
+
+```
+TWAP sell created!
+  Tx hash        : <tx_hash>
+  Etherscan      : https://sepolia.etherscan.io/tx/<tx_hash>
+  TWAP ID        : <TWAP_ID>
+  Part 0 UID     : <COW_UID>
+  Parts          : <n_parts> × <sell_per_part_human> <from_symbol>
+  Interval       : <interval>s
+  CoW Explorer   : https://explorer.cow.fi/sepolia/orders/<COW_UID>
+
+To post subsequent parts when each window opens: /post-twap-part <TWAP_ID>
+To cancel the TWAP: /cancel-twap <TWAP_ID>
+```

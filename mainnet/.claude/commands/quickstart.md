@@ -27,11 +27,11 @@ If `<owner>` or `<vault_name>` is missing, stop and print: "Usage: /quickstart <
 
 | Role | Address |
 |------|---------|
-| Factory | `0x0000000094B81677434600b69d739Bc62b66a9c3` |
-| Lending protocol (Aave V3) | `0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4` |
-| Staking protocol (Lido V2) | `0x4115bB297f21247FC55FD6255f0F8800d4172AF7` |
-| AMM protocol (UniswapV3) | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
-| Sky V1 protocol | `0x350758FA196c94aB4309CD4A953e0097cEAB7cF5` |
+| Factory | `0x00000086892600a65782e5E1F11dedE2Eac0cB6c` |
+| Lending protocol (Aave V3) | `0x1ee9040bD2E2418a4CbC8754865D595920EF9301` |
+| Staking protocol (Lido V2) | `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7` |
+| AMM protocol (UniswapV3) | `0xcC07F93057755f0E655B8411ee55a1192E385684` |
+| Sky V1 protocol | `0xb3fF9DF07F2901D97c07146d18093dE914141AD3` |
 
 UniswapV3 NonfungiblePositionManager (mainnet): `0xC36442b4a4522E871399CD717aBDD847Ab11FE88`
 
@@ -150,23 +150,18 @@ Print: `✓ Balance confirmed: <balance> wei`
 Print: `[3/5] Deploying vault...`
 
 ```bash
-cast send 0x0000000094B81677434600b69d739Bc62b66a9c3 \
-  "deployVault(address,string,address,address[],address[],address[],address[],address[])" \
+cast send 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
+  "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
-  "<asset_manager_address>" \
-  "[0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2,0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599]" \
-  "[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48,0xdAC17F958D2ee523a2206206994597C13D831ec7,0xdC035D45d973E3EC169d2276DDab16f1e407384F]" \
-  "[0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4]" \
-  "[0x4115bB297f21247FC55FD6255f0F8800d4172AF7]" \
-  "[0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436]" \
+  "[<asset_manager_address>]" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
 ```
 
 Compute the vault address:
 ```bash
-cast call 0x0000000094B81677434600b69d739Bc62b66a9c3 \
+cast call 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"

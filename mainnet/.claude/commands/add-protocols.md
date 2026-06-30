@@ -2,13 +2,13 @@ Add protocols to a BittyVault on Ethereum mainnet. Owner-only operation (DEFAULT
 
 **Usage:** `/add-protocols <type> <address1> [address2] ...`
 
-- `<type>` — protocol type: `lending`, `staking`, or `amm`
+- `<type>` — protocol type: `lending`, `staking`, `amm`, or `intent`
 - `<address>` — protocol contract address(es)
 
 Arguments: $ARGUMENTS
 
 Parse `$ARGUMENTS` as: first token is `<type>`, remaining tokens are protocol addresses.
-If `<type>` or at least one address is missing, stop and print: "Usage: /add-protocols <lending|staking|amm> <address1> [address2] ..."
+If `<type>` or at least one address is missing, stop and print: "Usage: /add-protocols <lending|staking|amm|intent> <address1> [address2] ..."
 
 ---
 
@@ -16,9 +16,11 @@ If `<type>` or at least one address is missing, stop and print: "Usage: /add-pro
 
 | Protocol | Type | Address |
 |----------|------|---------|
-| Aave V3 | lending | `0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4` |
-| Lido V2 | staking | `0x4115bB297f21247FC55FD6255f0F8800d4172AF7` |
-| UniswapV3 | amm | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
+| Aave V3 | lending | `0x1ee9040bD2E2418a4CbC8754865D595920EF9301` |
+| Lido V2 | staking | `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7` |
+| Uniswap V3 | amm | `0xcC07F93057755f0E655B8411ee55a1192E385684` |
+| Sky V1 | sky | `0xb3fF9DF07F2901D97c07146d18093dE914141AD3` |
+| CoW Swap V1 | intent | `0xBB75486D48d93023DC377746e1d0be1D81C2a037` |
 
 ---
 
@@ -28,7 +30,8 @@ If `<type>` or at least one address is missing, stop and print: "Usage: /add-pro
 
 ```bash
 echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
-echo "OWNER_PRIVATE_KEY=${OWNER_PRIVATE_KEY:?OWNER_PRIVATE_KEY is not set}" && \
+echo "SAFE_ADDRESS=${SAFE_ADDRESS:?SAFE_ADDRESS is not set}" && \
+echo "PROPOSER_PRIVATE_KEY=${PROPOSER_PRIVATE_KEY:?PROPOSER_PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
 
@@ -78,26 +81,83 @@ Based on `<type>`:
 
 - `lending`:
 ```bash
-cast send $VAULT_ADDRESS \
-  "addLendingProtocols(address[])" "[<addr1>,<addr2>,...]" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+CALLDATA=$(cast calldata \
+  "addLendingProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-mainnet.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
 ```
 
 - `staking`:
 ```bash
-cast send $VAULT_ADDRESS \
-  "addStakingProtocols(address[])" "[<addr1>,<addr2>,...]" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+CALLDATA=$(cast calldata \
+  "addStakingProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-mainnet.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
 ```
 
 - `amm`:
 ```bash
-cast send $VAULT_ADDRESS \
-  "addAMMProtocols(address[])" "[<addr1>,<addr2>,...]" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+CALLDATA=$(cast calldata \
+  "addAMMProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-mainnet.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
 ```
 
 If the transaction reverts, print the revert reason and stop.
@@ -109,7 +169,10 @@ Re-fetch protocols using the same getter as step 4.
 Print:
 ```
 Protocols added!
-  Tx hash            : <tx_hash>
-  Etherscan          : https://etherscan.io/tx/<tx_hash>
+  Safe     : $SAFE_ADDRESS
+  Tx hash  : $SAFE_TX_HASH
+  Queue    : https://app.safe.global/transactions/queue?safe=eth:$SAFE_ADDRESS
+
+Owners can review and execute at the Safe UI link above.
   Updated protocols  : <new_list>
 ```

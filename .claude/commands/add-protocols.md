@@ -2,13 +2,13 @@ Add protocols to a BittyVault on Sepolia. Owner-only operation (DEFAULT_ADMIN_RO
 
 **Usage:** `/add-protocols <type> <address1> [address2] ...`
 
-- `<type>` — protocol type: `lending`, `staking`, or `amm`
+- `<type>` — protocol type: `lending`, `staking`, `amm`, or `intent`
 - `<address>` — protocol contract address(es)
 
 Arguments: $ARGUMENTS
 
 Parse `$ARGUMENTS` as: first token is `<type>`, remaining tokens are protocol addresses.
-If `<type>` or at least one address is missing, stop and print: "Usage: /add-protocols <lending|staking|amm> <address1> [address2] ..."
+If `<type>` or at least one address is missing, stop and print: "Usage: /add-protocols <lending|staking|amm|intent> <address1> [address2] ..."
 
 ---
 
@@ -16,9 +16,10 @@ If `<type>` or at least one address is missing, stop and print: "Usage: /add-pro
 
 | Protocol | Type | Address |
 |----------|------|---------|
-| Aave V3 | lending | `0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44` |
-| Lido V2 | staking | `0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1` |
-| UniswapV3 | amm | `0x3Dc6038190092a4FA62c5203D00410f07d2221a4` |
+| Aave V3 | lending | `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80` |
+| Lido V2 | staking | `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C` |
+| Uniswap V3 | amm | `0x188487aECb5bB372f0B18fd983a0c8dcA9164227` |
+| CoW Swap V1 | intent | `0x034ef104B0c483EB71Ba2aD91a1de6224AdF4F70` |
 
 ---
 
@@ -28,7 +29,8 @@ If `<type>` or at least one address is missing, stop and print: "Usage: /add-pro
 
 ```bash
 echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
-echo "OWNER_PRIVATE_KEY=${OWNER_PRIVATE_KEY:?OWNER_PRIVATE_KEY is not set}" && \
+echo "SAFE_ADDRESS=${SAFE_ADDRESS:?SAFE_ADDRESS is not set}" && \
+echo "PROPOSER_PRIVATE_KEY=${PROPOSER_PRIVATE_KEY:?PROPOSER_PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
 
@@ -46,8 +48,8 @@ Error: Adding protocols has been permanently disabled on this vault.
 
 ### 3. Validate protocol type
 
-`<type>` must be one of: `lending`, `staking`, `amm` (case-insensitive).
-If invalid, stop and print: "Error: Invalid protocol type '<type>'. Use: lending, staking, or amm"
+`<type>` must be one of: `lending`, `staking`, `amm`, `intent` (case-insensitive).
+If invalid, stop and print: "Error: Invalid protocol type '<type>'. Use: lending, staking, amm, or intent"
 
 ### 4. Fetch current protocols of that type
 
@@ -56,6 +58,7 @@ Based on `<type>`, call the appropriate getter:
 - `lending`: `cast call $VAULT_ADDRESS "getLendingProtocols()(address[])" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"`
 - `staking`: `cast call $VAULT_ADDRESS "getStakingProtocols()(address[])" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"`
 - `amm`: `cast call $VAULT_ADDRESS "getAMMProtocols()(address[])" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"`
+- `intent`: `cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"`
 
 ### 5. Show preview and ask for confirmation
 
@@ -76,26 +79,110 @@ Based on `<type>`:
 
 - `lending`:
 ```bash
-cast send $VAULT_ADDRESS \
-  "addLendingProtocols(address[])" "[<addr1>,<addr2>,...]" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+CALLDATA=$(cast calldata \
+  "addLendingProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-sepolia.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
 ```
 
 - `staking`:
 ```bash
-cast send $VAULT_ADDRESS \
-  "addStakingProtocols(address[])" "[<addr1>,<addr2>,...]" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+CALLDATA=$(cast calldata \
+  "addStakingProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-sepolia.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
 ```
 
 - `amm`:
 ```bash
-cast send $VAULT_ADDRESS \
-  "addAMMProtocols(address[])" "[<addr1>,<addr2>,...]" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+CALLDATA=$(cast calldata \
+  "addAMMProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-sepolia.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
+```
+
+- `intent`:
+```bash
+CALLDATA=$(cast calldata \
+  "addIntentProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-sepolia.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
 ```
 
 If the transaction reverts, print the revert reason and stop.
@@ -107,7 +194,10 @@ Re-fetch protocols using the same getter as step 4.
 Print:
 ```
 Protocols added!
-  Tx hash            : <tx_hash>
-  Etherscan          : https://sepolia.etherscan.io/tx/<tx_hash>
+  Safe     : $SAFE_ADDRESS
+  Tx hash  : $SAFE_TX_HASH
+  Queue    : https://app.safe.global/transactions/queue?safe=sep:$SAFE_ADDRESS
+
+Owners can review and execute at the Safe UI link above.
   Updated protocols  : <new_list>
 ```

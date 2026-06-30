@@ -8,9 +8,9 @@ No arguments needed. Reads `$VAULT_ADDRESS` from env.
 
 ## Hardcoded mainnet configuration
 
-Lending protocol (Aave V3): `0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4`
+Lending protocol (Aave V3): `0x1ee9040bD2E2418a4CbC8754865D595920EF9301`
 
-Staking protocol (Lido V2): `0x4115bB297f21247FC55FD6255f0F8800d4172AF7`
+Staking protocol (Lido V2): `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7`
 
 ---
 
@@ -50,7 +50,7 @@ cast call <token_address> \
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4" \
+  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "<token_address>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
@@ -59,7 +59,7 @@ cast call $VAULT_ADDRESS \
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0x4115bB297f21247FC55FD6255f0F8800d4172AF7" \
+  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
   "<token_address>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
@@ -105,7 +105,7 @@ Finally print a pending unstake section if there are any:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0x4115bB297f21247FC55FD6255f0F8800d4172AF7" \
+  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 

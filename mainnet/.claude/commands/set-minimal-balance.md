@@ -1,25 +1,28 @@
-Add assets to a BittyVault on Ethereum mainnet. Owner-only operation (DEFAULT_ADMIN_ROLE).
+Set the minimum balance floor for an asset in a BittyVault on Ethereum mainnet. Owner-only operation (DEFAULT_ADMIN_ROLE).
 
-**Usage:** `/add-assets <asset1> [asset2] [asset3] ...`
+The vault will refuse any sell trade that would leave less than this amount of the asset. Set to `0` to allow selling the full balance.
 
-- Each `<asset>` — token symbol (WETH, WBTC, USDC, USDT, USDS) or a raw `0x…` address
+**Usage:** `/set-minimal-balance <asset> <min_balance>`
+
+- `<asset>` — token symbol (WETH, WBTC, USDT, USDC, USDS) or raw `0x…` address
+- `<min_balance>` — minimum token balance that must remain after any sell (human-readable, e.g. `10` for 10 WETH). Use `0` to remove the floor.
 
 Arguments: $ARGUMENTS
 
-Parse `$ARGUMENTS` as a space-separated list of assets.
-If empty, stop and print: "Usage: /add-assets <asset1> [asset2] ..."
+Parse `$ARGUMENTS` as two parts: asset, min_balance.
+If either is missing, stop and print: "Usage: /set-minimal-balance <asset> <min_balance>"
 
 ---
 
 ## Hardcoded mainnet configuration
 
-| Symbol | Address |
-|--------|---------|
-| WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
-| WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` |
-| USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
-| USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` |
-| USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` |
+| Symbol | Address | Decimals |
+|--------|---------|----------|
+| WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` | 18 |
+| WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` | 8 |
+| USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` | 6 |
+| USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
+| USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
 ---
 
@@ -34,33 +37,29 @@ echo "PROPOSER_PRIVATE_KEY=${PROPOSER_PRIVATE_KEY:?PROPOSER_PRIVATE_KEY is not s
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
 
-### 2. Check if adding assets is disabled
+### 2. Resolve asset address and decimals
+
+If `<asset>` matches a known symbol (case-insensitive), use the table above.
+If `<asset>` starts with `0x`, fetch its decimals:
 
 ```bash
-cast call $VAULT_ADDRESS "isAddingAssetsDisabled()(bool)" \
+cast call <asset_address> "decimals()(uint8)" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 
-If `true`, stop and print:
-```
-Error: Adding assets has been permanently disabled on this vault.
-```
+### 3. Convert amount to raw units
 
-### 3. Resolve asset addresses
+- 18 decimals: `cast to-unit <min_balance>ether wei`
+- Other decimals: `<min_balance> * 10^<decimals>` as integer
 
-For each asset in the list:
-- If it matches a known symbol (case-insensitive), use the table above.
-- If it starts with `0x`, use it directly.
+Save as `<min_balance_raw>`.
 
-Build the Solidity array: `[<addr1>,<addr2>,...]`
-
-### 4. Fetch current assets
+### 4. Fetch current minimal balance
 
 ```bash
-cast call $VAULT_ADDRESS "getAssets()(address[])" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
-
-cast call $VAULT_ADDRESS "getStableCoins()(address[])" \
+cast call $VAULT_ADDRESS \
+  "minimalBalance(address)(uint256)" \
+  "<asset_address>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 
@@ -68,22 +67,24 @@ cast call $VAULT_ADDRESS "getStableCoins()(address[])" \
 
 Print:
 ```
-This is Ethereum mainnet — real funds will be affected.
+⚠ This is Ethereum mainnet — real funds will be affected.
 
 Vault           : $VAULT_ADDRESS
-Current assets  : <current_asset_list>
-Adding          : <resolved_addresses>
+Asset           : <asset_symbol> (<asset_address>)
+Current floor   : <current_min_balance> (raw)
+New floor       : <min_balance> <asset_symbol> (<min_balance_raw> raw)
 ```
 
-Ask: "Proceed with adding assets? (yes/no)"
+Ask: "Proceed with updating minimal balance? (yes/no)"
 If no, stop.
 
-### 6. Call addAssets on the vault
+### 6. Call setMinimalBalance
 
 ```bash
 CALLDATA=$(cast calldata \
-  "addAssets(address[])" \
-  "[<addr1>,<addr2>,...]")
+  "setMinimalBalance(address,uint256)" \
+  "<asset_address>" \
+  "<min_balance_raw>")
 ```
 
 ```bash
@@ -112,20 +113,20 @@ If the transaction reverts, print the revert reason and stop.
 ### 7. Verify and show result
 
 ```bash
-cast call $VAULT_ADDRESS "getAssets()(address[])" \
-  --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
-
-cast call $VAULT_ADDRESS "getStableCoins()(address[])" \
+cast call $VAULT_ADDRESS \
+  "minimalBalance(address)(uint256)" \
+  "<asset_address>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 
 Print:
 ```
-Assets added!
+Minimal balance updated!
   Safe     : $SAFE_ADDRESS
   Tx hash  : $SAFE_TX_HASH
   Queue    : https://app.safe.global/transactions/queue?safe=eth:$SAFE_ADDRESS
 
 Owners can review and execute at the Safe UI link above.
-  Updated assets: <new_asset_list>
+  Asset     : <asset_symbol>
+  New floor : <verified_min_balance> (raw)
 ```

@@ -21,7 +21,7 @@ If any are missing, stop and print: "Usage: /supply <asset> <amount>"
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-Lending protocol: `0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44`
+Lending protocol: `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80`
 
 ---
 
@@ -75,7 +75,7 @@ Deposit funds into the vault before supplying.
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44" \
+  "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
   "<asset_address>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
@@ -89,7 +89,7 @@ Print:
 Vault           : $VAULT_ADDRESS
 Asset           : <asset_symbol> (<asset_address>)
 Amount          : <amount> <asset_symbol> (<amount_raw> raw)
-Lending protocol: 0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44
+Lending protocol: 0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80
 Currently supplied: <supplied_before> (raw)
 ```
 
@@ -101,7 +101,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "supply(address,address,uint256)" \
-  "0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44" \
+  "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
@@ -117,7 +117,7 @@ After the transaction confirms, fetch the new supplied balance:
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0xDF2d39981A4A72586a109b0A54331b0A07Fa3B44" \
+  "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
   "<asset_address>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```

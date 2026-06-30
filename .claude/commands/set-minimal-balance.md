@@ -1,16 +1,16 @@
-Update an existing payment receiver in a BittyVault on Sepolia. Owner-only operation (DEFAULT_ADMIN_ROLE).
+Set the minimum balance floor for an asset in a BittyVault on Sepolia. Owner-only operation (DEFAULT_ADMIN_ROLE).
 
-Cannot update receivers marked as immutable.
+The vault will refuse any sell trade that would leave less than this amount of the asset. Set to `0` to allow selling the full balance.
 
-**Usage:** `/update-receiver <name> <receiver_address> <asset> <amount> <payment_count> <start_timestamp> <duration_seconds> [trigger] [immutable] [pay_insufficient]`
+**Usage:** `/set-minimal-balance <asset> <min_balance>`
 
-- `<name>` — name of the existing receiver to update
-- Remaining fields are the same as `/add-receiver`
+- `<asset>` — token symbol (WETH, WBTC, USDT, USDC) or raw `0x…` address
+- `<min_balance>` — minimum token balance that must remain after any sell (human-readable, e.g. `10` for 10 WETH). Use `0` to remove the floor.
 
 Arguments: $ARGUMENTS
 
-Parse `$ARGUMENTS` into the fields above. At minimum, the first 7 are required.
-If any required field is missing, stop and print: "Usage: /update-receiver <name> <receiver_address> <asset> <amount> <payment_count> <start_timestamp> <duration_seconds> [trigger] [immutable] [pay_insufficient]"
+Parse `$ARGUMENTS` as two parts: asset, min_balance.
+If either is missing, stop and print: "Usage: /set-minimal-balance <asset> <min_balance>"
 
 ---
 
@@ -19,6 +19,8 @@ If any required field is missing, stop and print: "Usage: /update-receiver <name
 | Symbol | Address | Decimals |
 |--------|---------|----------|
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
+| WETH_UNI | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` | 18 |
+| WETH_AAVE | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` | 18 |
 | WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
@@ -48,48 +50,40 @@ cast call <asset_address> "decimals()(uint8)" \
 
 ### 3. Convert amount to raw units
 
-- 18 decimals: `cast to-unit <amount>ether wei`
-- Other decimals: compute `<amount> * 10^<decimals>` as integer
+- 18 decimals: `cast to-unit <min_balance>ether wei`
+- Other decimals: `<min_balance> * 10^<decimals>` as integer
 
-Save as `<amount_raw>`.
+Save as `<min_balance_raw>`.
 
-### 4. Resolve start timestamp
+### 4. Fetch current minimal balance
 
-If `<start_timestamp>` is `now`, use `$(date +%s)`.
+```bash
+cast call $VAULT_ADDRESS \
+  "minimalBalance(address)(uint256)" \
+  "<asset_address>" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+```
 
-### 5. Set defaults for optional parameters
-
-- `<trigger>`: default `0x0000000000000000000000000000000000000000`
-- `<immutable>`: default `false`
-- `<pay_insufficient>`: default `false`
-
-### 6. Show preview and ask for confirmation
+### 5. Show preview and ask for confirmation
 
 Print:
 ```
-Vault                    : $VAULT_ADDRESS
-Updating receiver        : <name>
-New receiver address     : <receiver_address>
-Asset                    : <asset_symbol> (<asset_address>)
-Amount per payment       : <amount> <asset_symbol> (<amount_raw> raw)
-Payment count            : <payment_count>
-Start timestamp          : <start_timestamp>
-Duration between payments: <duration_seconds> seconds
-Trigger                  : <trigger>
-Immutable                : <immutable>
-Pay with insufficient    : <pay_insufficient>
+Vault           : $VAULT_ADDRESS
+Asset           : <asset_symbol> (<asset_address>)
+Current floor   : <current_min_balance> (raw)
+New floor       : <min_balance> <asset_symbol> (<min_balance_raw> raw)
 ```
 
-Ask: "Proceed with updating receiver? (yes/no)"
+Ask: "Proceed with updating minimal balance? (yes/no)"
 If no, stop.
 
-### 7. Call updateReceiver on the vault
+### 6. Call setMinimalBalance
 
 ```bash
 CALLDATA=$(cast calldata \
-  "updateReceiver(string,(address,address,address,uint256,uint8,uint256,uint256,bool,bool))" \
-  "<name>" \
-  "(<receiver_address>,<trigger>,<asset_address>,<amount_raw>,<payment_count>,<start_timestamp>,<duration_seconds>,<immutable>,<pay_insufficient>)")
+  "setMinimalBalance(address,uint256)" \
+  "<asset_address>" \
+  "<min_balance_raw>")
 ```
 
 ```bash
@@ -115,18 +109,23 @@ curl -s -X POST \
 
 If the transaction reverts, print the revert reason and stop.
 
-### 8. Show result
+### 7. Verify and show result
+
+```bash
+cast call $VAULT_ADDRESS \
+  "minimalBalance(address)(uint256)" \
+  "<asset_address>" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
+```
 
 Print:
 ```
-Receiver updated!
+Minimal balance updated!
   Safe     : $SAFE_ADDRESS
   Tx hash  : $SAFE_TX_HASH
   Queue    : https://app.safe.global/transactions/queue?safe=sep:$SAFE_ADDRESS
 
 Owners can review and execute at the Safe UI link above.
-  Name      : <name>
-  Recipient : <receiver_address>
   Asset     : <asset_symbol>
-  Amount    : <amount> per payment x <payment_count> payments
+  New floor : <verified_min_balance> (raw)
 ```

@@ -16,7 +16,7 @@ Parse `$ARGUMENTS` as three parts. If any are missing, stop and print usage.
 
 ## Hardcoded mainnet configuration
 
-AMM protocol (UniswapV3): `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436`
+AMM protocol (UniswapV3): `0x1ee9040bD2E2418a4CbC8754865D595920EF9301`
 
 UniswapV3 NonfungiblePositionManager (mainnet): `0xC36442b4a4522E871399CD717aBDD847Ab11FE88`
 
@@ -102,7 +102,7 @@ Fee tier           : <fee>
 Current liquidity  : <current_liquidity>
 Removing           : <liquidity_percent>% → <LIQUIDITY_TO_REMOVE> units
 Deadline           : <deadline_minutes> min from now
-AMM protocol       : 0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436
+AMM protocol       : 0x1ee9040bD2E2418a4CbC8754865D595920EF9301
 ```
 
 Ask: "Proceed with removing liquidity? (yes/no)"
@@ -113,7 +113,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "removeLiquidity(address,bytes)" \
-  "0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436" \
+  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "$DATA" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"

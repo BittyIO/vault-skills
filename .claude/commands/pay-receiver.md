@@ -18,7 +18,7 @@ If `<name>` is missing, stop and print: "Usage: /pay-receiver <name> [amount]"
 
 ```bash
 echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
-echo "OWNER_PRIVATE_KEY=${OWNER_PRIVATE_KEY:?OWNER_PRIVATE_KEY is not set}" && \
+echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
 
@@ -44,7 +44,7 @@ cast send $VAULT_ADDRESS \
   "<name>" \
   "<amount_raw>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+  --private-key "$PRIVATE_KEY"
 ```
 
 If `<amount>` was NOT provided, call `payReceiver`:
@@ -54,7 +54,7 @@ cast send $VAULT_ADDRESS \
   "payReceiver(string)" \
   "<name>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+  --private-key "$PRIVATE_KEY"
 ```
 
 If the transaction reverts, print the revert reason and stop. Common reasons:

@@ -14,7 +14,7 @@ Parse `$ARGUMENTS` as optional request IDs (all tokens).
 
 ## Hardcoded Sepolia configuration
 
-Staking protocol: `0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1`
+Staking protocol: `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C`
 
 ---
 
@@ -37,7 +37,7 @@ Otherwise fetch all pending IDs from the vault:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1" \
+  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 
@@ -66,7 +66,7 @@ Save as `<weth_before>`.
 Print:
 ```
 Vault             : $VAULT_ADDRESS
-Staking protocol  : 0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1
+Staking protocol  : 0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C
 Request IDs       : <request_ids>
 Vault WETH balance: <weth_before> (raw)
 ```
@@ -79,7 +79,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "claimUnstaked(address,uint256[])" \
-  "0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1" \
+  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   "<request_ids_array>" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"
@@ -100,7 +100,7 @@ cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 \
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0x7b38439Eb757E1eC3849b7C7033C7d67A733bbe1" \
+  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
 

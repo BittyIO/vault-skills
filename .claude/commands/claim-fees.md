@@ -12,7 +12,7 @@ Parse `$ARGUMENTS` as one part. If missing, stop and print usage.
 
 ## Hardcoded Sepolia configuration
 
-AMM protocol: `0x3Dc6038190092a4FA62c5203D00410f07d2221a4`
+AMM protocol: `0x188487aECb5bB372f0B18fd983a0c8dcA9164227`
 
 UniswapV3 NonfungiblePositionManager (Sepolia): `0x1238536071E1c677A632429e3655c799b22cDA52`
 
@@ -86,7 +86,7 @@ Token0             : <token0_address>
 Token1             : <token1_address>
 Uncollected fees0  : <tokensOwed0> (raw)
 Uncollected fees1  : <tokensOwed1> (raw)
-AMM protocol       : 0x3Dc6038190092a4FA62c5203D00410f07d2221a4
+AMM protocol       : 0x188487aECb5bB372f0B18fd983a0c8dcA9164227
 ```
 
 Ask: "Proceed with claiming fees? (yes/no)"
@@ -97,7 +97,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "claimAMMFees(address,bytes)" \
-  "0x3Dc6038190092a4FA62c5203D00410f07d2221a4" \
+  "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
   "$DATA" \
   --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"

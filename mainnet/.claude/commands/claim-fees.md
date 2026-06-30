@@ -12,7 +12,7 @@ Parse `$ARGUMENTS` as one part. If missing, stop and print usage.
 
 ## Hardcoded mainnet configuration
 
-AMM protocol (UniswapV3): `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436`
+AMM protocol (UniswapV3): `0x1ee9040bD2E2418a4CbC8754865D595920EF9301`
 
 UniswapV3 NonfungiblePositionManager (mainnet): `0xC36442b4a4522E871399CD717aBDD847Ab11FE88`
 
@@ -88,7 +88,7 @@ Token0             : <token0_address>
 Token1             : <token1_address>
 Uncollected fees0  : <tokensOwed0> (raw)
 Uncollected fees1  : <tokensOwed1> (raw)
-AMM protocol       : 0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436
+AMM protocol       : 0x1ee9040bD2E2418a4CbC8754865D595920EF9301
 ```
 
 Ask: "Proceed with claiming fees? (yes/no)"
@@ -99,7 +99,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "claimAMMFees(address,bytes)" \
-  "0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436" \
+  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "$DATA" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
   --private-key "$PRIVATE_KEY"

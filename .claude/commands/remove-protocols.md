@@ -18,7 +18,8 @@ If `<type>` or at least one address is missing, stop and print: "Usage: /remove-
 
 ```bash
 echo "ALCHEMY_KEY=${ALCHEMY_KEY:?ALCHEMY_KEY is not set}" && \
-echo "OWNER_PRIVATE_KEY=${OWNER_PRIVATE_KEY:?OWNER_PRIVATE_KEY is not set}" && \
+echo "SAFE_ADDRESS=${SAFE_ADDRESS:?SAFE_ADDRESS is not set}" && \
+echo "PROPOSER_PRIVATE_KEY=${PROPOSER_PRIVATE_KEY:?PROPOSER_PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
 
@@ -54,26 +55,83 @@ Based on `<type>`:
 
 - `lending`:
 ```bash
-cast send $VAULT_ADDRESS \
-  "removeLendingProtocols(address[])" "[<addr1>,<addr2>,...]" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+CALLDATA=$(cast calldata \
+  "removeLendingProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-sepolia.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
 ```
 
 - `staking`:
 ```bash
-cast send $VAULT_ADDRESS \
-  "removeStakingProtocols(address[])" "[<addr1>,<addr2>,...]" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+CALLDATA=$(cast calldata \
+  "removeStakingProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-sepolia.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
 ```
 
 - `amm`:
 ```bash
-cast send $VAULT_ADDRESS \
-  "removeAMMProtocols(address[])" "[<addr1>,<addr2>,...]" \
-  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY" \
-  --private-key "$OWNER_PRIVATE_KEY"
+CALLDATA=$(cast calldata \
+  "removeAMMProtocols(address[])" "[<addr1>,<addr2>,...]")
+```
+
+```bash
+NONCE=$(cast call $SAFE_ADDRESS "nonce()(uint256)" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+SAFE_TX_HASH=$(cast call $SAFE_ADDRESS \
+  "getTransactionHash(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,uint256)(bytes32)" \
+  "$VAULT_ADDRESS" "0" "$CALLDATA" "0" "0" "0" "0" \
+  "0x0000000000000000000000000000000000000000" \
+  "0x0000000000000000000000000000000000000000" \
+  "$NONCE" \
+  --rpc-url "https://eth-sepolia.g.alchemy.com/v2/$ALCHEMY_KEY")
+
+PROPOSER=$(cast wallet address --private-key "$PROPOSER_PRIVATE_KEY")
+SIG=$(cast wallet sign --no-hash "$SAFE_TX_HASH" --private-key "$PROPOSER_PRIVATE_KEY")
+
+curl -s -X POST \
+  "https://safe-transaction-sepolia.safe.global/api/v1/safes/$SAFE_ADDRESS/multisig-transactions/" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "$VAULT_ADDRESS", "value": "0", "data": "$CALLDATA", "operation": 0, "safeTxGas": "0", "baseGas": "0", "gasPrice": "0", "gasToken": "0x0000000000000000000000000000000000000000", "refundReceiver": "0x0000000000000000000000000000000000000000", "nonce": $NONCE, "contractTransactionHash": "$SAFE_TX_HASH", "sender": "$PROPOSER", "signature": "$SIG"}'
 ```
 
 If the transaction reverts, print the revert reason and stop.
@@ -85,7 +143,10 @@ Re-fetch protocols using the same getter as step 3.
 Print:
 ```
 Protocols removed!
-  Tx hash              : <tx_hash>
-  Etherscan            : https://sepolia.etherscan.io/tx/<tx_hash>
+  Safe     : $SAFE_ADDRESS
+  Tx hash  : $SAFE_TX_HASH
+  Queue    : https://app.safe.global/transactions/queue?safe=sep:$SAFE_ADDRESS
+
+Owners can review and execute at the Safe UI link above.
   Remaining protocols  : <updated_list>
 ```

@@ -22,7 +22,7 @@ If any are missing, stop and print: "Usage: /supply <asset> <amount>"
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-Lending protocol (Aave V3): `0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4`
+Lending protocol (Aave V3): `0x1ee9040bD2E2418a4CbC8754865D595920EF9301`
 
 ---
 
@@ -76,7 +76,7 @@ Deposit funds into the vault before supplying.
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4" \
+  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "<asset_address>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
@@ -92,7 +92,7 @@ Print:
 Vault           : $VAULT_ADDRESS
 Asset           : <asset_symbol> (<asset_address>)
 Amount          : <amount> <asset_symbol> (<amount_raw> raw)
-Lending protocol: 0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4
+Lending protocol: 0x1ee9040bD2E2418a4CbC8754865D595920EF9301
 Currently supplied: <supplied_before> (raw)
 ```
 
@@ -104,7 +104,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "supply(address,address,uint256)" \
-  "0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4" \
+  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY" \
@@ -120,7 +120,7 @@ After the transaction confirms, fetch the new supplied balance:
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4" \
+  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
   "<asset_address>" \
   --rpc-url "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_KEY"
 ```
