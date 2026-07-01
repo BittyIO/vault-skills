@@ -11,7 +11,7 @@ If missing, stop and print usage.
 
 ---
 
-CoW Swap intent protocol (Sepolia): `0x034ef104B0c483EB71Ba2aD91a1de6224AdF4F70`
+CoW Swap intent protocol (Sepolia): `0x8fAcE6c6fb2C97EE4f0d0e98C3A540df72673812`
 CoW Swap explorer (Sepolia): `https://explorer.cow.fi/sepolia/`
 
 ---
@@ -27,7 +27,7 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ### 2. Resolve clone address
 
 ```bash
-INTENT_PROTOCOL=0x034ef104B0c483EB71Ba2aD91a1de6224AdF4F70
+INTENT_PROTOCOL=0x8fAcE6c6fb2C97EE4f0d0e98C3A540df72673812
 RPC="<rpc_url>"
 
 CLONE=$(cast call $VAULT_ADDRESS "getClone(address)(address)" "$INTENT_PROTOCOL" --rpc-url "$RPC")

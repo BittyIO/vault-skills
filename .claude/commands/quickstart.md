@@ -23,10 +23,10 @@ If `<owner>` or `<vault_name>` is missing, stop and print: "Usage: /quickstart <
 
 | Role | Address |
 |------|---------|
-| Factory | `0x00000086892600a65782e5E1F11dedE2Eac0cB6c` |
+| Factory | `0x000000003A780585A00fdeB1f137A15A4BB31e38` |
 | Lending protocol | `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80` |
 | Staking protocol | `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C` |
-| AMM protocol | `0x188487aECb5bB372f0B18fd983a0c8dcA9164227` |
+| AMM protocol | `0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b` |
 
 | LP pair token | Address | Decimals |
 |--------|---------|----------|
@@ -187,7 +187,7 @@ Print: `✓ Balance confirmed: <balance> wei`
 Print: `[3/15] Deploying vault...`
 
 ```bash
-cast send 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
+cast send 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
   "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -198,7 +198,7 @@ cast send 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
 
 Compute the vault address:
 ```bash
-cast call 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
+cast call 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "<rpc_url>"
@@ -304,7 +304,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "marketSell(address,address,address,uint256,uint256,bytes)" \
-  "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
+  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "$WETH_RAW" "1" "$DATA" \
@@ -355,7 +355,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "marketSell(address,address,address,uint256,uint256,bytes)" \
-  "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
+  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "$USDC_BEFORE" "1" "$DATA" \
@@ -649,7 +649,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "addLiquidity(address,address,uint256,address,uint256,bytes)" \
-  "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
+  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
   "$TOKEN0" "$AMOUNT0_RAW" \
   "$TOKEN1" "$AMOUNT1_RAW" \
   "$DATA" \
@@ -702,7 +702,7 @@ DATA=$(cast abi-encode \
 
 cast send <vault_address> \
   "marketSell(address,address,address,uint256,uint256,bytes)" \
-  "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
+  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
   "$TOKEN0" "$TOKEN1" "$SWAP_AMT" "1" "$DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
@@ -747,7 +747,7 @@ DATA=$(cast abi-encode \
 
 cast send <vault_address> \
   "claimAMMFees(address,bytes)" \
-  "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
+  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
   "$DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
@@ -799,7 +799,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "removeLiquidity(address,bytes)" \
-  "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
+  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
   "$DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

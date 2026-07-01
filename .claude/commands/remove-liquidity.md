@@ -16,7 +16,7 @@ Parse `$ARGUMENTS` as three parts. If any are missing, stop and print usage.
 
 ## Hardcoded Sepolia configuration
 
-AMM protocol: `0x188487aECb5bB372f0B18fd983a0c8dcA9164227`
+AMM protocol: `0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b`
 
 UniswapV3 NonfungiblePositionManager (Sepolia): `0x1238536071E1c677A632429e3655c799b22cDA52`
 
@@ -99,7 +99,7 @@ Fee tier           : <fee>
 Current liquidity  : <current_liquidity>
 Removing           : <liquidity_percent>% → <LIQUIDITY_TO_REMOVE> units
 Deadline           : <deadline_minutes> min from now
-AMM protocol       : 0x188487aECb5bB372f0B18fd983a0c8dcA9164227
+AMM protocol       : 0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b
 ```
 
 Ask: "Proceed with removing liquidity? (yes/no)"
@@ -110,7 +110,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "removeLiquidity(address,bytes)" \
-  "0x188487aECb5bB372f0B18fd983a0c8dcA9164227" \
+  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
   "$DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

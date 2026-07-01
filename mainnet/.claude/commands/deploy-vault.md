@@ -1,4 +1,4 @@
-Deploy a new BittyVault on Ethereum mainnet via the factory at `0x00000086892600a65782e5E1F11dedE2Eac0cB6c`.
+Deploy a new BittyVault on Ethereum mainnet via the factory at `0x000000003A780585A00fdeB1f137A15A4BB31e38`.
 
 **Usage:** `/deploy-vault <owner_address> [vault_name]`
 
@@ -16,7 +16,7 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 | Role | Address |
 |------|---------|
-| Factory | `0x00000086892600a65782e5E1F11dedE2Eac0cB6c` |
+| Factory | `0x000000003A780585A00fdeB1f137A15A4BB31e38` |
 | WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
 | WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` |
 | USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
@@ -24,7 +24,7 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` |
 | Lending (Aave V3) | `0x1ee9040bD2E2418a4CbC8754865D595920EF9301` |
 | Staking (Lido V2) | `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7` |
-| AMM (Uniswap V3) | `0xcC07F93057755f0E655B8411ee55a1192E385684` |
+| AMM (Uniswap V3) | `0x7C71715714Ad934D917DFe6b180fe547Cc88C6d3` |
 | Sky V1 | `0xb3fF9DF07F2901D97c07146d18093dE914141AD3` |
 
 ---
@@ -65,7 +65,7 @@ If the user says no, stop.
 ### 4. Deploy the vault
 
 ```bash
-cast send 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
+cast send 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
   "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -79,7 +79,7 @@ If the transaction fails, print the revert reason and stop.
 ### 5. Compute and display the vault address
 
 ```bash
-cast call 0x00000086892600a65782e5E1F11dedE2Eac0cB6c \
+cast call 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "<rpc_url>"
