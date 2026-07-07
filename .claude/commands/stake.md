@@ -21,7 +21,7 @@ If any are missing, stop and print: "Usage: /stake <asset> <amount>"
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-Staking protocol: `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C`
+Staking protocol: `0x91F7682054cfE444A1E0e84F654010E2F7a69421`
 
 ---
 
@@ -78,7 +78,7 @@ Error: Stake amount exceeds vault balance.
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -92,7 +92,7 @@ Print:
 Vault            : $VAULT_ADDRESS
 Asset            : <asset_symbol> (<asset_address>)
 Amount           : <amount> <asset_symbol> (<amount_raw> raw)
-Staking protocol : 0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C
+Staking protocol : 0x91F7682054cfE444A1E0e84F654010E2F7a69421
 Vault balance    : <vault_balance> (raw)
 Currently staked : <staked_before> (raw)
 ```
@@ -105,7 +105,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "stake(address,address,uint256)" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "<rpc_url>" \
@@ -121,7 +121,7 @@ Fetch the new staked balance after the tx:
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```

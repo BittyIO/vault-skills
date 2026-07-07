@@ -20,16 +20,16 @@ Source: https://info.etherscan.com/how-to-use-read-or-write-contract-features-on
 
 | Name | Address |
 | --- | --- |
-| BittyVaultFactory | `0x0000000094B81677434600b69d739Bc62b66a9c3` |
+| BittyVaultFactory | `0x000000005d581dBc2558d32D90E13FAb5d55daAE` |
 | WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
 | WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` |
 | USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` |
-| Aave V3 protocol | `0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4` |
-| Lido V2 protocol | `0x4115bB297f21247FC55FD6255f0F8800d4172AF7` |
-| Uniswap V3 protocol | `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
-| Sky V1 protocol reference | `0x350758FA196c94aB4309CD4A953e0097cEAB7cF5` |
+| Aave V3 protocol | `0x66716637fF73C14C6536E494099D4a8Ea0e71206` |
+| Lido V2 protocol | `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9` |
+| Uniswap V3 protocol | `0x581ea6f54F14AC823f9541f761483263e8CfeB4a` |
+| Sky V1 protocol reference | `0x26E671D35FCdC095E72Ebe40a3051bf4b90a56F7` |
 | Uniswap V3 NonfungiblePositionManager | `0xC36442b4a4522E871399CD717aBDD847Ab11FE88` |
 
 Asset decimals:
@@ -63,7 +63,7 @@ Do not grant `ASSET_MANAGER_ROLE` to the same address as the owner if the vault 
 ## 4. Create a Vault on Etherscan
 
 1. Open the factory page:
-   `https://etherscan.io/address/0x0000000094B81677434600b69d739Bc62b66a9c3#writeContract`
+   `https://etherscan.io/address/0x000000005d581dBc2558d32D90E13FAb5d55daAE#writeContract`
 2. Click `Connect to Web3`.
 3. Connect the deployer wallet. The mainnet skill uses the asset manager wallet as the transaction sender.
 4. Find `deployVaultAllSelected`.
@@ -170,12 +170,12 @@ Use the asset manager wallet on the vault `Write Contract` tab.
 
 | Operation | Function | Mainnet protocol |
 | --- | --- | --- |
-| Swap | `rebalance` | Uniswap V3: `0x3b9384Ea4db89Af8Af54489779333b5A9c2b0436` |
-| Supply | `supply` | Aave V3: `0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4` |
-| Withdraw | `withdraw` | Aave V3: `0x6F8B36cd866f91F844446d16f9FA8dEA09AF6cF4` |
-| Stake | `stake` | Lido V2: `0x4115bB297f21247FC55FD6255f0F8800d4172AF7` |
-| Request unstake | `unstake` | Lido V2: `0x4115bB297f21247FC55FD6255f0F8800d4172AF7` |
-| Claim unstaked | `claimUnstaked` | Lido V2: `0x4115bB297f21247FC55FD6255f0F8800d4172AF7` |
+| Swap | `rebalance` | Uniswap V3: `0x581ea6f54F14AC823f9541f761483263e8CfeB4a` |
+| Supply | `supply` | Aave V3: `0x66716637fF73C14C6536E494099D4a8Ea0e71206` |
+| Withdraw | `withdraw` | Aave V3: `0x66716637fF73C14C6536E494099D4a8Ea0e71206` |
+| Stake | `stake` | Lido V2: `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9` |
+| Request unstake | `unstake` | Lido V2: `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9` |
+| Claim unstaked | `claimUnstaked` | Lido V2: `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9` |
 | Add liquidity | `addLiquidity` | Uniswap V3 protocol adapter |
 | Remove liquidity | `removeLiquidity` | Uniswap V3 protocol adapter |
 | Claim fees | `claimFees` | Uniswap V3 protocol adapter |

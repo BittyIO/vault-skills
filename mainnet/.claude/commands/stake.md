@@ -22,7 +22,7 @@ If any are missing, stop and print: "Usage: /stake <asset> <amount>"
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-Staking protocol (Lido V2): `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7`
+Staking protocol (Lido V2): `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9`
 
 ---
 
@@ -79,7 +79,7 @@ Error: Stake amount exceeds vault balance.
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -95,7 +95,7 @@ Print:
 Vault            : $VAULT_ADDRESS
 Asset            : <asset_symbol> (<asset_address>)
 Amount           : <amount> <asset_symbol> (<amount_raw> raw)
-Staking protocol : 0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7
+Staking protocol : 0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9
 Vault balance    : <vault_balance> (raw)
 Currently staked : <staked_before> (raw)
 ```
@@ -108,7 +108,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "stake(address,address,uint256)" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "<rpc_url>" \
@@ -124,7 +124,7 @@ Fetch the new staked balance after the tx:
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```

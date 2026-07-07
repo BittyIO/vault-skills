@@ -22,7 +22,7 @@ If any are missing, stop and print: "Usage: /withdraw <asset> <amount>"
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-Lending protocol (Aave V3): `0x1ee9040bD2E2418a4CbC8754865D595920EF9301`
+Lending protocol (Aave V3): `0x66716637fF73C14C6536E494099D4a8Ea0e71206`
 
 ---
 
@@ -50,7 +50,7 @@ cast call <asset_address> "decimals()(uint8)" \
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
+  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -84,7 +84,7 @@ Print:
 Vault             : $VAULT_ADDRESS
 Asset             : <asset_symbol> (<asset_address>)
 Amount            : <amount> <asset_symbol> (<amount_raw> raw)
-Lending protocol  : 0x1ee9040bD2E2418a4CbC8754865D595920EF9301
+Lending protocol  : 0x66716637fF73C14C6536E494099D4a8Ea0e71206
 Supplied balance  : <supplied_balance> (raw)
 Remaining after   : <supplied_balance - amount_raw> (raw)
 ```
@@ -97,7 +97,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "withdraw(address,address,uint256)" \
-  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
+  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "<rpc_url>" \
@@ -113,7 +113,7 @@ Fetch the new supplied balance and vault token balance after the tx:
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
+  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```

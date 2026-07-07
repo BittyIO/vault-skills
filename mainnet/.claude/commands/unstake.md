@@ -25,7 +25,7 @@ If any are missing, stop and print: "Usage: /unstake <asset> <amount>"
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-Staking protocol (Lido V2): `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7`
+Staking protocol (Lido V2): `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9`
 
 ---
 
@@ -53,7 +53,7 @@ cast call <asset_address> "decimals()(uint8)" \
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -83,7 +83,7 @@ Error: Unstake amount exceeds staked balance.
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   --rpc-url "<rpc_url>"
 ```
 
@@ -98,7 +98,7 @@ Print:
 Vault              : $VAULT_ADDRESS
 Asset              : <asset_symbol> (<asset_address>)
 Amount             : <amount> <asset_symbol> (<amount_raw> raw)
-Staking protocol   : 0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7
+Staking protocol   : 0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9
 Staked balance     : <staked_balance> (raw)
 Remaining staked   : <staked_balance - amount_raw> (raw)
 Pending request IDs: <request_ids_before>
@@ -115,7 +115,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "unstake(address,address,uint256)" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "<rpc_url>" \
@@ -129,7 +129,7 @@ If the transaction reverts, print the revert reason and stop.
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   --rpc-url "<rpc_url>"
 ```
 

@@ -11,7 +11,7 @@ If missing, stop and print usage.
 
 ---
 
-CoW Swap intent protocol (mainnet): `0xD7ee1cAbF87e9527a0FF3E891750b57a8e7f5f66`
+CoW Swap intent protocol (mainnet): `0x81C47B11bD6c1092b9341a4Db5001D1CdB487239`
 CoW Swap explorer (mainnet): `https://explorer.cow.fi/`
 
 ⚠ **This operates on Ethereum mainnet with real funds.**
@@ -29,7 +29,7 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ### 2. Resolve clone address
 
 ```bash
-INTENT_PROTOCOL=0xD7ee1cAbF87e9527a0FF3E891750b57a8e7f5f66
+INTENT_PROTOCOL=0x81C47B11bD6c1092b9341a4Db5001D1CdB487239
 RPC="<rpc_url>"
 
 CLONE=$(cast call $VAULT_ADDRESS "getClone(address)(address)" "$INTENT_PROTOCOL" --rpc-url "$RPC")

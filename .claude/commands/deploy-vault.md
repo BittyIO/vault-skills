@@ -1,4 +1,4 @@
-Deploy a new BittyVault on Sepolia via the factory at `0x000000003A780585A00fdeB1f137A15A4BB31e38`.
+Deploy a new BittyVault on Sepolia via the factory at `0x000000005d581dBc2558d32D90E13FAb5d55daAE`.
 
 **Usage:** `/deploy-vault <owner_address> [vault_name]`
 
@@ -16,17 +16,17 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 | Role | Address |
 |------|---------|
-| Factory | `0x000000003A780585A00fdeB1f137A15A4BB31e38` |
+| Factory | `0x000000005d581dBc2558d32D90E13FAb5d55daAE` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
 | WETH_UNI | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
 | WETH_AAVE | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |
 | WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` |
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
-| Lending (Aave V3) | `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80` |
-| Staking (Lido V2) | `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C` |
-| AMM (Uniswap V3) | `0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b` |
-| Intent (CoW Swap V1) | `0x8fAcE6c6fb2C97EE4f0d0e98C3A540df72673812` |
+| Lending (Aave V3) | `0x472eDb79A83cC8470473Df20dD49a85E91769b98` |
+| Staking (Lido V2) | `0x91F7682054cfE444A1E0e84F654010E2F7a69421` |
+| AMM (Uniswap V3) | `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26` |
+| Intent (CoW Swap V1) | `0xb1579963b9353B0a5E2efc26746C5aAf870dC048` |
 
 ---
 
@@ -64,7 +64,7 @@ If the user says no, stop.
 ### 4. Deploy the vault
 
 ```bash
-cast send 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
+cast send 0x000000005d581dBc2558d32D90E13FAb5d55daAE \
   "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -78,7 +78,7 @@ If the transaction fails, print the revert reason and stop.
 ### 5. Compute and display the vault address
 
 ```bash
-cast call 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
+cast call 0x000000005d581dBc2558d32D90E13FAb5d55daAE \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "<rpc_url>"

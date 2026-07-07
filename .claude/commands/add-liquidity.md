@@ -27,7 +27,7 @@ Parse the first token as the mode (`mint` or `increase`). If missing or invalid,
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-AMM protocol: `0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b`
+AMM protocol: `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26`
 
 **Tick spacing by fee tier** (ticks must be multiples of spacing):
 | Fee | Spacing |
@@ -119,7 +119,7 @@ Amount1       : <amount1> (<amount1_raw> raw)
 Fee tier      : <fee_tier>
 Tick range    : [<tick_lower>, <tick_upper>]
 Deadline      : <deadline_minutes> min from now
-AMM protocol  : 0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b
+AMM protocol  : 0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26
 ```
 
 Ask: "Proceed? (yes/no)"
@@ -129,7 +129,7 @@ Ask: "Proceed? (yes/no)"
 ```bash
 cast send $VAULT_ADDRESS \
   "addLiquidity(address,address,uint256,address,uint256,bytes)" \
-  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
+  "0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26" \
   "<token0_address>" "<amount0_raw>" \
   "<token1_address>" "<amount1_raw>" \
   "$DATA" \
@@ -186,7 +186,7 @@ Token1        : <token1_address>
 Amount0       : <amount0> (<amount0_raw> raw)
 Amount1       : <amount1> (<amount1_raw> raw)
 Deadline      : <deadline_minutes> min from now
-AMM protocol  : 0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b
+AMM protocol  : 0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26
 ```
 
 Ask: "Proceed? (yes/no)"

@@ -8,9 +8,9 @@ No arguments needed. Reads `$VAULT_ADDRESS` from env.
 
 ## Hardcoded Sepolia configuration
 
-Lending protocol: `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80`
+Lending protocol: `0x472eDb79A83cC8470473Df20dD49a85E91769b98`
 
-Staking protocol: `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C`
+Staking protocol: `0x91F7682054cfE444A1E0e84F654010E2F7a69421`
 
 ---
 
@@ -49,7 +49,7 @@ cast call <token_address> \
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
+  "0x472eDb79A83cC8470473Df20dD49a85E91769b98" \
   "<token_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -58,7 +58,7 @@ cast call $VAULT_ADDRESS \
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "<token_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -103,7 +103,7 @@ Finally print a pending unstake section if there are any:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   --rpc-url "<rpc_url>"
 ```
 

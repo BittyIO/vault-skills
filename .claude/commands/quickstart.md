@@ -23,10 +23,10 @@ If `<owner>` or `<vault_name>` is missing, stop and print: "Usage: /quickstart <
 
 | Role | Address |
 |------|---------|
-| Factory | `0x000000003A780585A00fdeB1f137A15A4BB31e38` |
-| Lending protocol | `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80` |
-| Staking protocol | `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C` |
-| AMM protocol | `0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b` |
+| Factory | `0x000000005d581dBc2558d32D90E13FAb5d55daAE` |
+| Lending protocol | `0x472eDb79A83cC8470473Df20dD49a85E91769b98` |
+| Staking protocol | `0x91F7682054cfE444A1E0e84F654010E2F7a69421` |
+| AMM protocol | `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26` |
 
 | LP pair token | Address | Decimals |
 |--------|---------|----------|
@@ -187,7 +187,7 @@ Print: `✓ Balance confirmed: <balance> wei`
 Print: `[3/15] Deploying vault...`
 
 ```bash
-cast send 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
+cast send 0x000000005d581dBc2558d32D90E13FAb5d55daAE \
   "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -198,7 +198,7 @@ cast send 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
 
 Compute the vault address:
 ```bash
-cast call 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
+cast call 0x000000005d581dBc2558d32D90E13FAb5d55daAE \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "<rpc_url>"
@@ -304,7 +304,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "marketSell(address,address,address,uint256,uint256,bytes)" \
-  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
+  "0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "$WETH_RAW" "1" "$DATA" \
@@ -355,7 +355,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "marketSell(address,address,address,uint256,uint256,bytes)" \
-  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
+  "0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26" \
   "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "$USDC_BEFORE" "1" "$DATA" \
@@ -388,7 +388,7 @@ Note: USDC is frozen on Aave Sepolia (error 51). Use WETH_AAVE (`0xC558DBdd85650
 Capture balances before:
 ```bash
 WETH_AAVE_WALLET_BEFORE=$(cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
-WETH_AAVE_SUPPLIED_BEFORE=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "<rpc_url>" | awk '{print $1}')
+WETH_AAVE_SUPPLIED_BEFORE=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x472eDb79A83cC8470473Df20dD49a85E91769b98" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Supply `<demo_amount>` WETH_AAVE:
@@ -396,7 +396,7 @@ Supply `<demo_amount>` WETH_AAVE:
 SUPPLY_AMT=$(cast to-unit <demo_amount>ether wei)
 cast send <vault_address> \
   "supply(address,address,uint256)" \
-  "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
+  "0x472eDb79A83cC8470473Df20dD49a85E91769b98" \
   "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" \
   "$SUPPLY_AMT" \
   --rpc-url "<rpc_url>" \
@@ -406,7 +406,7 @@ cast send <vault_address> \
 Capture balances after:
 ```bash
 WETH_AAVE_WALLET_AFTER=$(cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
-WETH_AAVE_SUPPLIED_AFTER=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "<rpc_url>" | awk '{print $1}')
+WETH_AAVE_SUPPLIED_AFTER=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x472eDb79A83cC8470473Df20dD49a85E91769b98" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -433,13 +433,13 @@ Withdraw it all:
 ```bash
 SUPPLIED=$(cast call <vault_address> \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
+  "0x472eDb79A83cC8470473Df20dD49a85E91769b98" \
   "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" \
   --rpc-url "<rpc_url>" | awk '{print $1}')
 
 cast send <vault_address> \
   "withdraw(address,address,uint256)" \
-  "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" \
+  "0x472eDb79A83cC8470473Df20dD49a85E91769b98" \
   "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" \
   "$SUPPLIED" \
   --rpc-url "<rpc_url>" \
@@ -449,7 +449,7 @@ cast send <vault_address> \
 Capture balances after:
 ```bash
 WETH_AAVE_WALLET_AFTER=$(cast call 0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
-WETH_AAVE_SUPPLIED_AFTER=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "<rpc_url>" | awk '{print $1}')
+WETH_AAVE_SUPPLIED_AFTER=$(cast call <vault_address> "getSuppliedBalance(address,address)(uint256)" "0x472eDb79A83cC8470473Df20dD49a85E91769b98" "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -469,13 +469,13 @@ Print: `[9/15] Staking <demo_amount> WETH in Lido...`
 Capture balances before:
 ```bash
 WETH_BEFORE=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
-LIDO_STAKED_BEFORE=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "<rpc_url>" | awk '{print $1}')
+LIDO_STAKED_BEFORE=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0x91F7682054cfE444A1E0e84F654010E2F7a69421" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 ```bash
 cast send <vault_address> \
   "stake(address,address,uint256)" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "$WETH_RAW" \
   --rpc-url "<rpc_url>" \
@@ -485,7 +485,7 @@ cast send <vault_address> \
 Capture balances after:
 ```bash
 WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
-LIDO_STAKED_AFTER=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "<rpc_url>" | awk '{print $1}')
+LIDO_STAKED_AFTER=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0x91F7682054cfE444A1E0e84F654010E2F7a69421" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "<rpc_url>" | awk '{print $1}')
 ```
 
 Print:
@@ -523,13 +523,13 @@ LIDO_STAKED_BEFORE=$LIDO_STAKED_AFTER
 
 STAKED=$(cast call <vault_address> \
   "getStakedBalance(address,address)(uint256)" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   --rpc-url "<rpc_url>" | awk '{print $1}')
 
 cast send <vault_address> \
   "unstake(address,address,uint256)" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" \
   "$STAKED" \
   --rpc-url "<rpc_url>" \
@@ -539,11 +539,11 @@ cast send <vault_address> \
 Capture balances after and fetch pending request IDs:
 ```bash
 WETH_AFTER=$(cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 "balanceOf(address)(uint256)" <vault_address> --rpc-url "<rpc_url>" | awk '{print $1}')
-LIDO_STAKED_AFTER=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "<rpc_url>" | awk '{print $1}')
+LIDO_STAKED_AFTER=$(cast call <vault_address> "getStakedBalance(address,address)(uint256)" "0x91F7682054cfE444A1E0e84F654010E2F7a69421" "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" --rpc-url "<rpc_url>" | awk '{print $1}')
 
 cast call <vault_address> \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   --rpc-url "<rpc_url>"
 ```
 
@@ -574,7 +574,7 @@ Poll by attempting a dry-run simulation every 30 seconds until it succeeds or 60
 ```bash
 cast call <vault_address> \
   "claimUnstaked(address,uint256[])" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "<request_ids_array>" \
   --rpc-url "<rpc_url>" \
   --from "$(cast wallet address --private-key $PRIVATE_KEY)"
@@ -589,7 +589,7 @@ WETH_BEFORE=$WETH_AFTER
 
 cast send <vault_address> \
   "claimUnstaked(address,uint256[])" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "<request_ids_array>" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
@@ -649,7 +649,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "addLiquidity(address,address,uint256,address,uint256,bytes)" \
-  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
+  "0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26" \
   "$TOKEN0" "$AMOUNT0_RAW" \
   "$TOKEN1" "$AMOUNT1_RAW" \
   "$DATA" \
@@ -702,7 +702,7 @@ DATA=$(cast abi-encode \
 
 cast send <vault_address> \
   "marketSell(address,address,address,uint256,uint256,bytes)" \
-  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
+  "0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26" \
   "$TOKEN0" "$TOKEN1" "$SWAP_AMT" "1" "$DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
@@ -747,7 +747,7 @@ DATA=$(cast abi-encode \
 
 cast send <vault_address> \
   "claimAMMFees(address,bytes)" \
-  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
+  "0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26" \
   "$DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
@@ -799,7 +799,7 @@ Execute:
 ```bash
 cast send <vault_address> \
   "removeLiquidity(address,bytes)" \
-  "0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b" \
+  "0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26" \
   "$DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

@@ -90,16 +90,16 @@ Requires `OWNER_PRIVATE_KEY` in `.env` (the vault owner's key — typically a ha
 
 | Contract | Address |
 |----------|---------|
-| BittyVaultFactory | `0x00000000C600356864798327A5b11bdd636656e3` |
+| BittyVaultFactory | `0x000000005d581dBc2558d32D90E13FAb5d55daAE` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
 | WETH (Uniswap) | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
 | WETH (Aave) | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |
 | WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` |
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
-| Aave V3 Protocol | `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80` |
-| Lido V2 Protocol | `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C` |
-| Uniswap V3 Protocol | `0x8897C6DcbA33C842DffC1be4B58c73b2eC6869E3` |
+| Aave V3 Protocol | `0x472eDb79A83cC8470473Df20dD49a85E91769b98` |
+| Lido V2 Protocol | `0x91F7682054cfE444A1E0e84F654010E2F7a69421` |
+| Uniswap V3 Protocol | `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26` |
 
 ## Known Sepolia limitations
 

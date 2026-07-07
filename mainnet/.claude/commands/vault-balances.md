@@ -8,9 +8,9 @@ No arguments needed. Reads `$VAULT_ADDRESS` from env.
 
 ## Hardcoded mainnet configuration
 
-Lending protocol (Aave V3): `0x1ee9040bD2E2418a4CbC8754865D595920EF9301`
+Lending protocol (Aave V3): `0x66716637fF73C14C6536E494099D4a8Ea0e71206`
 
-Staking protocol (Lido V2): `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7`
+Staking protocol (Lido V2): `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9`
 
 ---
 
@@ -49,7 +49,7 @@ cast call <token_address> \
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
+  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
   "<token_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -58,7 +58,7 @@ cast call $VAULT_ADDRESS \
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   "<token_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -104,7 +104,7 @@ Finally print a pending unstake section if there are any:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   --rpc-url "<rpc_url>"
 ```
 

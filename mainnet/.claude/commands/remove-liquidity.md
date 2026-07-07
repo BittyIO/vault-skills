@@ -16,7 +16,7 @@ Parse `$ARGUMENTS` as three parts. If any are missing, stop and print usage.
 
 ## Hardcoded mainnet configuration
 
-AMM protocol (UniswapV3): `0x1ee9040bD2E2418a4CbC8754865D595920EF9301`
+AMM protocol (UniswapV3): `0x66716637fF73C14C6536E494099D4a8Ea0e71206`
 
 UniswapV3 NonfungiblePositionManager (mainnet): `0xC36442b4a4522E871399CD717aBDD847Ab11FE88`
 
@@ -101,7 +101,7 @@ Fee tier           : <fee>
 Current liquidity  : <current_liquidity>
 Removing           : <liquidity_percent>% → <LIQUIDITY_TO_REMOVE> units
 Deadline           : <deadline_minutes> min from now
-AMM protocol       : 0x1ee9040bD2E2418a4CbC8754865D595920EF9301
+AMM protocol       : 0x66716637fF73C14C6536E494099D4a8Ea0e71206
 ```
 
 Ask: "Proceed with removing liquidity? (yes/no)"
@@ -112,7 +112,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "removeLiquidity(address,bytes)" \
-  "0x1ee9040bD2E2418a4CbC8754865D595920EF9301" \
+  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
   "$DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

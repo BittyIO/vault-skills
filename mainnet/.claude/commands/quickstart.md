@@ -27,11 +27,11 @@ If `<owner>` or `<vault_name>` is missing, stop and print: "Usage: /quickstart <
 
 | Role | Address |
 |------|---------|
-| Factory | `0x000000003A780585A00fdeB1f137A15A4BB31e38` |
-| Lending protocol (Aave V3) | `0x1ee9040bD2E2418a4CbC8754865D595920EF9301` |
-| Staking protocol (Lido V2) | `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7` |
-| AMM protocol (UniswapV3) | `0x7C71715714Ad934D917DFe6b180fe547Cc88C6d3` |
-| Sky V1 protocol | `0xb3fF9DF07F2901D97c07146d18093dE914141AD3` |
+| Factory | `0x000000005d581dBc2558d32D90E13FAb5d55daAE` |
+| Lending protocol (Aave V3) | `0x66716637fF73C14C6536E494099D4a8Ea0e71206` |
+| Staking protocol (Lido V2) | `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9` |
+| AMM protocol (UniswapV3) | `0x581ea6f54F14AC823f9541f761483263e8CfeB4a` |
+| Sky V1 protocol | `0x26E671D35FCdC095E72Ebe40a3051bf4b90a56F7` |
 
 UniswapV3 NonfungiblePositionManager (mainnet): `0xC36442b4a4522E871399CD717aBDD847Ab11FE88`
 
@@ -149,7 +149,7 @@ Print: `✓ Balance confirmed: <balance> wei`
 Print: `[3/5] Deploying vault...`
 
 ```bash
-cast send 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
+cast send 0x000000005d581dBc2558d32D90E13FAb5d55daAE \
   "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -160,7 +160,7 @@ cast send 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
 
 Compute the vault address:
 ```bash
-cast call 0x000000003A780585A00fdeB1f137A15A4BB31e38 \
+cast call 0x000000005d581dBc2558d32D90E13FAb5d55daAE \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "<rpc_url>"

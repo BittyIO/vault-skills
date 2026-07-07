@@ -14,7 +14,7 @@ Parse `$ARGUMENTS` as optional request IDs (all tokens).
 
 ## Hardcoded mainnet configuration
 
-Staking protocol (Lido V2): `0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7`
+Staking protocol (Lido V2): `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9`
 
 WETH: `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2`
 
@@ -38,7 +38,7 @@ Otherwise fetch all pending IDs from the vault:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   --rpc-url "<rpc_url>"
 ```
 
@@ -69,7 +69,7 @@ Print:
 ⚠ This is Ethereum mainnet — real funds will be used.
 
 Vault             : $VAULT_ADDRESS
-Staking protocol  : 0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7
+Staking protocol  : 0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9
 Request IDs       : <request_ids>
 Vault WETH balance: <weth_before> (raw)
 ```
@@ -82,7 +82,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "claimUnstaked(address,uint256[])" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   "<request_ids_array>" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
@@ -103,7 +103,7 @@ cast call 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 \
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xcEecA8ba582180d014378AAFcaA5f324C77BE2A7" \
+  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
   --rpc-url "<rpc_url>"
 ```
 

@@ -12,7 +12,7 @@ Parse `$ARGUMENTS` as: first token is `<twap_id>`. If missing, stop and print us
 
 ## Hardcoded mainnet configuration
 
-CoW Swap intent protocol (mainnet): `0xD7ee1cAbF87e9527a0FF3E891750b57a8e7f5f66`
+CoW Swap intent protocol (mainnet): `0x81C47B11bD6c1092b9341a4Db5001D1CdB487239`
 
 ---
 
@@ -31,7 +31,7 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ⚠ Cancel CoW Swap TWAP — MAINNET
 Vault            : $VAULT_ADDRESS
 TWAP ID          : <twap_id>
-Intent protocol  : 0xD7ee1cAbF87e9527a0FF3E891750b57a8e7f5f66
+Intent protocol  : 0x81C47B11bD6c1092b9341a4Db5001D1CdB487239
 ```
 
 Ask: "Cancel this TWAP on MAINNET? (yes/no)" — if no, stop.
@@ -41,7 +41,7 @@ Ask: "Cancel this TWAP on MAINNET? (yes/no)" — if no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "cancelTwap(address,bytes32)" \
-  "0xD7ee1cAbF87e9527a0FF3E891750b57a8e7f5f66" \
+  "0x81C47B11bD6c1092b9341a4Db5001D1CdB487239" \
   "<twap_id>" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

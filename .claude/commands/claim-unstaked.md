@@ -14,7 +14,7 @@ Parse `$ARGUMENTS` as optional request IDs (all tokens).
 
 ## Hardcoded Sepolia configuration
 
-Staking protocol: `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C`
+Staking protocol: `0x91F7682054cfE444A1E0e84F654010E2F7a69421`
 
 ---
 
@@ -36,7 +36,7 @@ Otherwise fetch all pending IDs from the vault:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   --rpc-url "<rpc_url>"
 ```
 
@@ -65,7 +65,7 @@ Save as `<weth_before>`.
 Print:
 ```
 Vault             : $VAULT_ADDRESS
-Staking protocol  : 0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C
+Staking protocol  : 0x91F7682054cfE444A1E0e84F654010E2F7a69421
 Request IDs       : <request_ids>
 Vault WETH balance: <weth_before> (raw)
 ```
@@ -78,7 +78,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "claimUnstaked(address,uint256[])" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   "<request_ids_array>" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
@@ -99,7 +99,7 @@ cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 \
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C" \
+  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
   --rpc-url "<rpc_url>"
 ```
 

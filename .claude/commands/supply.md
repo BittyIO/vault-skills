@@ -28,7 +28,7 @@ Based on their answer, set these values for all subsequent steps. If user choose
 | `<rpc_url>` | `<rpc_url>` | `<rpc_url>` |
 | `<etherscan_base>` | `https://sepolia.etherscan.io` | `https://etherscan.io` |
 | `<network_name>` | `Sepolia` | `Ethereum mainnet` |
-| `<lending_protocol>` | `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80` (Aave V3) | `0x1ee9040bD2E2418a4CbC8754865D595920EF9301` (Aave V3) |
+| `<lending_protocol>` | `0x472eDb79A83cC8470473Df20dD49a85E91769b98` (Aave V3) | `0x66716637fF73C14C6536E494099D4a8Ea0e71206` (Aave V3) |
 
 Token addresses:
 

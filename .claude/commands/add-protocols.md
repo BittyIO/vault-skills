@@ -16,10 +16,10 @@ If `<type>` or at least one address is missing, stop and print: "Usage: /add-pro
 
 | Protocol | Type | Address |
 |----------|------|---------|
-| Aave V3 | lending | `0x1e115f5527b860eC1c67967bc96c4FAbf39cFD80` |
-| Lido V2 | staking | `0xAa83429F9ab50DA9F4bABEA6b66238f558A1550C` |
-| Uniswap V3 | amm | `0xf4dAFAb9E813A8c69EDA1cB27f1A49b42b7aF50b` |
-| CoW Swap V1 | intent | `0x8fAcE6c6fb2C97EE4f0d0e98C3A540df72673812` |
+| Aave V3 | lending | `0x472eDb79A83cC8470473Df20dD49a85E91769b98` |
+| Lido V2 | staking | `0x91F7682054cfE444A1E0e84F654010E2F7a69421` |
+| Uniswap V3 | amm | `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26` |
+| CoW Swap V1 | intent | `0xb1579963b9353B0a5E2efc26746C5aAf870dC048` |
 
 ---
 
