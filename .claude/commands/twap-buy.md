@@ -28,7 +28,7 @@ If first 6 are missing, stop and print usage.
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-CoW Swap intent protocol (Sepolia): `0xb1579963b9353B0a5E2efc26746C5aAf870dC048`
+CoW Swap intent protocol (Sepolia): `0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD`
 
 ---
 
@@ -44,12 +44,12 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ### 2. Set intent protocol and verify registration
 
 ```bash
-INTENT_PROTOCOL=0xb1579963b9353B0a5E2efc26746C5aAf870dC048
+INTENT_PROTOCOL=0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD
 cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" \
   --rpc-url "<rpc_url>"
 ```
 
-If `$INTENT_PROTOCOL` not in result, stop: "Error: CoW Swap protocol not registered. Run /add-protocols intent 0xb1579963b9353B0a5E2efc26746C5aAf870dC048"
+If `$INTENT_PROTOCOL` not in result, stop: "Error: CoW Swap protocol not registered. Run /add-protocols intent 0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD"
 
 ### 3. Resolve asset addresses and decimals
 

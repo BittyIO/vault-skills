@@ -12,7 +12,7 @@ set -a; . vault-skills/.env 2>/dev/null; set +a
 
 RPC="https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
 V=0xB6171444358F490fd64eD38d13a74F327B291632
-INTENT=0x81C47B11bD6c1092b9341a4Db5001D1CdB487239
+INTENT=0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca
 COW_API="https://api.cow.fi/mainnet/api/v1/orders"
 
 CLONE=$(cast call "$V" "getClone(address)(address)" "$INTENT" --rpc-url "$RPC")

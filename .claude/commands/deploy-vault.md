@@ -26,7 +26,7 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 | Lending (Aave V3) | `0x472eDb79A83cC8470473Df20dD49a85E91769b98` |
 | Staking (Lido V2) | `0x91F7682054cfE444A1E0e84F654010E2F7a69421` |
 | AMM (Uniswap V3) | `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26` |
-| Intent (CoW Swap V1) | `0xb1579963b9353B0a5E2efc26746C5aAf870dC048` |
+| Intent (CoW Swap V1) | `0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD` |
 
 ---
 

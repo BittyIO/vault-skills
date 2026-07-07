@@ -12,7 +12,7 @@ Parse `$ARGUMENTS` as: first token is `<twap_id>`. If missing, stop and print us
 
 ## Hardcoded Sepolia configuration
 
-CoW Swap intent protocol (Sepolia): `0xb1579963b9353B0a5E2efc26746C5aAf870dC048`
+CoW Swap intent protocol (Sepolia): `0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD`
 
 ---
 
@@ -31,7 +31,7 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 Cancel CoW Swap TWAP order
 Vault            : $VAULT_ADDRESS
 TWAP ID          : <twap_id>
-Intent protocol  : 0xb1579963b9353B0a5E2efc26746C5aAf870dC048
+Intent protocol  : 0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD
 ```
 
 Ask: "Cancel this TWAP? (yes/no)" — if no, stop.
@@ -41,7 +41,7 @@ Ask: "Cancel this TWAP? (yes/no)" — if no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "cancelTwap(address,bytes32)" \
-  "0xb1579963b9353B0a5E2efc26746C5aAf870dC048" \
+  "0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD" \
   "<twap_id>" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

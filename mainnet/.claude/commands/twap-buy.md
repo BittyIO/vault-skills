@@ -29,7 +29,7 @@ If first 6 are missing, stop and print usage.
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-CoW Swap intent protocol (mainnet): `0x81C47B11bD6c1092b9341a4Db5001D1CdB487239`
+CoW Swap intent protocol (mainnet): `0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca`
 
 ⚠ **This operates on Ethereum mainnet with real funds.**
 
@@ -47,12 +47,12 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ### 2. Set intent protocol and verify registration
 
 ```bash
-INTENT_PROTOCOL=0x81C47B11bD6c1092b9341a4Db5001D1CdB487239
+INTENT_PROTOCOL=0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca
 cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" \
   --rpc-url "<rpc_url>"
 ```
 
-If `$INTENT_PROTOCOL` not in result, stop: "Error: CoW Swap protocol not registered. Run /add-protocols intent 0x81C47B11bD6c1092b9341a4Db5001D1CdB487239"
+If `$INTENT_PROTOCOL` not in result, stop: "Error: CoW Swap protocol not registered. Run /add-protocols intent 0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca"
 
 ### 3. Resolve assets and convert amounts
 

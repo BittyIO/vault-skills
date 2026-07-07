@@ -19,7 +19,7 @@ If `<type>` or at least one address is missing, stop and print: "Usage: /add-pro
 | Aave V3 | lending | `0x472eDb79A83cC8470473Df20dD49a85E91769b98` |
 | Lido V2 | staking | `0x91F7682054cfE444A1E0e84F654010E2F7a69421` |
 | Uniswap V3 | amm | `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26` |
-| CoW Swap V1 | intent | `0xb1579963b9353B0a5E2efc26746C5aAf870dC048` |
+| CoW Swap V1 | intent | `0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD` |
 
 ---
 

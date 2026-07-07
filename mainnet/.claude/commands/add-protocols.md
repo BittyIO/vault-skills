@@ -20,7 +20,7 @@ If `<type>` or at least one address is missing, stop and print: "Usage: /add-pro
 | Lido V2 | staking | `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9` |
 | Uniswap V3 | amm | `0x581ea6f54F14AC823f9541f761483263e8CfeB4a` |
 | Sky V1 | sky | `0x26E671D35FCdC095E72Ebe40a3051bf4b90a56F7` |
-| CoW Swap V1 | intent | `0x81C47B11bD6c1092b9341a4Db5001D1CdB487239` |
+| CoW Swap V1 | intent | `0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca` |
 
 ---
 

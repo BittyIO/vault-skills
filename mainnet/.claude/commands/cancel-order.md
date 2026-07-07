@@ -12,7 +12,7 @@ Parse `$ARGUMENTS` as: first token is `<order_id>`. If missing, stop and print u
 
 ## Hardcoded mainnet configuration
 
-CoW Swap intent protocol (mainnet): `0x81C47B11bD6c1092b9341a4Db5001D1CdB487239`
+CoW Swap intent protocol (mainnet): `0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca`
 CoW Swap explorer (mainnet): `https://explorer.cow.fi/`
 
 ---
@@ -38,7 +38,7 @@ CANCEL_DATA=$(cast abi-encode "f(bytes32)" "<order_id>")
 ⚠ Cancel CoW Swap limit order — MAINNET
 Vault            : $VAULT_ADDRESS
 Order ID         : <order_id>
-Intent protocol  : 0x81C47B11bD6c1092b9341a4Db5001D1CdB487239
+Intent protocol  : 0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca
 CoW Explorer     : https://explorer.cow.fi/orders/<order_id>
 ```
 
@@ -49,7 +49,7 @@ Ask: "Cancel this order on MAINNET? (yes/no)" — if no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "cancelLimitOrder(address,bytes)" \
-  "0x81C47B11bD6c1092b9341a4Db5001D1CdB487239" \
+  "0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca" \
   "$CANCEL_DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

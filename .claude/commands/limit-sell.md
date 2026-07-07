@@ -24,7 +24,7 @@ If the first 4 are missing, stop and print usage.
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-CoW Swap intent protocol (Sepolia): `0xb1579963b9353B0a5E2efc26746C5aAf870dC048`
+CoW Swap intent protocol (Sepolia): `0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD`
 CoW Swap explorer (Sepolia): `https://explorer.cow.fi/sepolia/`
 
 ---
@@ -41,14 +41,14 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-va
 ### 2. Set intent protocol and verify registration
 
 ```bash
-INTENT_PROTOCOL=0xb1579963b9353B0a5E2efc26746C5aAf870dC048
+INTENT_PROTOCOL=0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD
 RPC="<rpc_url>"
 cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC"
 ```
 
 If `$INTENT_PROTOCOL` is not in the result, stop:
 ```
-Error: CoW Swap protocol not registered. Run /add-protocols intent 0xb1579963b9353B0a5E2efc26746C5aAf870dC048
+Error: CoW Swap protocol not registered. Run /add-protocols intent 0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD
 ```
 
 ### 3. Get APP_DATA from intent protocol
@@ -137,7 +137,11 @@ If the transaction reverts, print the revert reason and stop.
 
 ### 10. Post order to CoW API
 
+The adapter applies a partner fee (`PARTNER_FEE_BPS = 20` → 0.2%) on-chain. For a **sell** order it discounts the buy side **down** 0.2% (`_discountForPartnerFee`), so the CoW post must use that same discounted `buyAmount` — posting the raw amount is rejected with `InvalidEip1271Signature`.
+
 ```bash
+POST_BUY_AMOUNT=$(python3 -c "print(<buy_amount_min_raw> * 9980 // 10000)")
+
 JSON_BODY=$(python3 -c "
 import json
 print(json.dumps({
@@ -145,7 +149,7 @@ print(json.dumps({
     'buyToken': '<to_asset_address>',
     'receiver': '$VAULT_ADDRESS',
     'sellAmount': '<sell_amount_raw>',
-    'buyAmount': '<buy_amount_min_raw>',
+    'buyAmount': '$POST_BUY_AMOUNT',
     'validTo': $VALID_TO,
     'appData': '$APP_DATA',
     'feeAmount': '0',

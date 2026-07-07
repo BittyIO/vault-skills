@@ -25,7 +25,7 @@ If the first 4 are missing, stop and print usage.
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-CoW Swap intent protocol (mainnet): `0x81C47B11bD6c1092b9341a4Db5001D1CdB487239`
+CoW Swap intent protocol (mainnet): `0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca`
 CoW Swap explorer (mainnet): `https://explorer.cow.fi/`
 
 ⚠ **This operates on Ethereum mainnet with real funds.**
@@ -44,12 +44,12 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ### 2. Set intent protocol and verify registration
 
 ```bash
-INTENT_PROTOCOL=0x81C47B11bD6c1092b9341a4Db5001D1CdB487239
+INTENT_PROTOCOL=0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca
 RPC="<rpc_url>"
 cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC"
 ```
 
-If `$INTENT_PROTOCOL` not in result, stop: "Error: CoW Swap protocol not registered. Run /add-protocols intent 0x81C47B11bD6c1092b9341a4Db5001D1CdB487239"
+If `$INTENT_PROTOCOL` not in result, stop: "Error: CoW Swap protocol not registered. Run /add-protocols intent 0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca"
 
 ### 3. Get APP_DATA from intent protocol
 
@@ -122,14 +122,18 @@ TX_HASH=$(cast send $VAULT_ADDRESS \
 
 ### 10. Post order to CoW API
 
+The adapter applies a partner fee (`PARTNER_FEE_BPS = 20` → 0.2%) on-chain. For a **buy** order it grosses the sell side **up** 0.2% (`_grossUpForPartnerFee`), so the CoW post must use that same grossed-up `sellAmount` — posting the raw amount is rejected with `InvalidEip1271Signature`.
+
 ```bash
+POST_SELL_AMOUNT=$(python3 -c "print(<sell_amount_max_raw> * 10020 // 10000)")
+
 JSON_BODY=$(python3 -c "
 import json
 print(json.dumps({
     'sellToken': '<from_asset_address>',
     'buyToken': '<to_asset_address>',
     'receiver': '$VAULT_ADDRESS',
-    'sellAmount': '<sell_amount_max_raw>',
+    'sellAmount': '$POST_SELL_AMOUNT',
     'buyAmount': '<buy_amount_raw>',
     'validTo': $VALID_TO,
     'appData': '$APP_DATA',
