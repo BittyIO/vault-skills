@@ -1,4 +1,4 @@
-Deploy a new BittyVault on Ethereum mainnet via the factory at `0x000000000a8dC1844B9741Ba9FB6576410640Bfc`.
+Deploy a new BittyVault on Ethereum mainnet via the factory at `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3`.
 
 **Usage:** `/deploy-vault <owner_address> [vault_name]`
 
@@ -16,7 +16,7 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 | Role | Address |
 |------|---------|
-| Factory | `0x000000000a8dC1844B9741Ba9FB6576410640Bfc` |
+| Factory | `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3` |
 | WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
 | WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` |
 | USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
@@ -65,7 +65,7 @@ If the user says no, stop.
 ### 4. Deploy the vault
 
 ```bash
-cast send 0x000000000a8dC1844B9741Ba9FB6576410640Bfc \
+cast send 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
   "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -79,7 +79,7 @@ If the transaction fails, print the revert reason and stop.
 ### 5. Compute and display the vault address
 
 ```bash
-cast call 0x000000000a8dC1844B9741Ba9FB6576410640Bfc \
+cast call 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "<rpc_url>"

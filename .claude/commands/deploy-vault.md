@@ -1,4 +1,4 @@
-Deploy a new BittyVault on Sepolia via the factory at `0x000000000a8dC1844B9741Ba9FB6576410640Bfc`.
+Deploy a new BittyVault on Sepolia via the factory at `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3`.
 
 **Usage:** `/deploy-vault <owner_address> [vault_name]`
 
@@ -16,7 +16,7 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 | Role | Address |
 |------|---------|
-| Factory | `0x000000000a8dC1844B9741Ba9FB6576410640Bfc` |
+| Factory | `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
 | WETH_UNI | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
 | WETH_AAVE | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |
@@ -64,7 +64,7 @@ If the user says no, stop.
 ### 4. Deploy the vault
 
 ```bash
-cast send 0x000000000a8dC1844B9741Ba9FB6576410640Bfc \
+cast send 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
   "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -78,7 +78,7 @@ If the transaction fails, print the revert reason and stop.
 ### 5. Compute and display the vault address
 
 ```bash
-cast call 0x000000000a8dC1844B9741Ba9FB6576410640Bfc \
+cast call 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "<rpc_url>"
