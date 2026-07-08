@@ -46,7 +46,7 @@ RPC="<rpc_url>"
 cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC"
 ```
 
-If the result doesn't include `$INTENT_PROTOCOL`, stop: "Error: CoW Swap protocol not registered. Run /add-protocols intent 0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD"
+If the result doesn't include `$INTENT_PROTOCOL`, stop: "Error: CoW Swap protocol not registered. ask the vault owner to add it via the web app (Manage → Protocols)"
 
 ### 3. Get APP_DATA from intent protocol
 

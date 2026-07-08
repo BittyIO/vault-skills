@@ -63,28 +63,11 @@ Requires `PRIVATE_KEY` in `.env` (the asset manager's hot wallet key).
 | `/add-liquidity` | `/add-liquidity mint\|increase ...` | Add liquidity to a Uniswap V3 position |
 | `/remove-liquidity` | `/remove-liquidity <tokenId> <pct> <deadline>` | Remove liquidity from a Uniswap V3 position |
 | `/claim-fees` | `/claim-fees <tokenId>` | Collect accumulated Uniswap V3 fees |
-
-### Owner skills (DEFAULT_ADMIN_ROLE)
-
-Requires `OWNER_PRIVATE_KEY` in `.env` (the vault owner's key — typically a hardware wallet or multi-sig signer).
-
-| Skill | Usage | Description |
-|-------|-------|-------------|
-| `/set-name` | `/set-name <new_name>` | Set the vault's display name |
-| `/add-assets` | `/add-assets <asset1> [asset2] ...` | Add tradeable assets to the vault |
-| `/remove-assets` | `/remove-assets <asset1> [asset2] ...` | Remove assets from the vault |
-| `/lock-assets` | `/lock-assets` | **Irreversible** — permanently disable adding new assets |
-| `/add-protocols` | `/add-protocols <type> <addr1> ...` | Add lending/staking/AMM protocols |
-| `/remove-protocols` | `/remove-protocols <type> <addr1> ...` | Remove lending/staking/AMM protocols |
-| `/lock-protocols` | `/lock-protocols` | **Irreversible** — permanently disable adding new protocols |
-| `/set-rebalance-config` | `/set-rebalance-config <asset> <min_bal> <min_dur> <max_amt>` | Set per-asset rebalance limits |
-| `/add-receiver` | `/add-receiver <name> <addr> <asset> <amt> <count> <start> <dur>` | Add a payment receiver |
-| `/update-receiver` | `/update-receiver <name> <addr> <asset> <amt> <count> <start> <dur>` | Update an existing receiver |
-| `/remove-receiver` | `/remove-receiver <name>` | Remove a payment receiver |
-| `/set-receiver-protection` | `/set-receiver-protection <seconds>` | Set time-lock for new receivers |
 | `/pay-receiver` | `/pay-receiver <name> [amount]` | Trigger a payment to a receiver |
-| `/grant-role` | `/grant-role <address>` | Grant ASSET_MANAGER_ROLE to an address |
-| `/revoke-role` | `/revoke-role <address>` | Revoke ASSET_MANAGER_ROLE from an address |
+
+### Vault owner management
+
+Owner operations (assets, protocols, receivers, roles, locks) are intentionally **not** CLI skills. The vault owner is typically a hardware wallet or multisig, and its key must never be exposed to the CLI. Manage these from the web app instead: open your vault and use **Manage**, signing with the connected owner wallet.
 
 ## Sepolia contract addresses
 

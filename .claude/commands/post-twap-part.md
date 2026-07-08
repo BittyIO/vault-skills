@@ -33,7 +33,7 @@ RPC="<rpc_url>"
 CLONE=$(cast call $VAULT_ADDRESS "getClone(address)(address)" "$INTENT_PROTOCOL" --rpc-url "$RPC")
 ```
 
-If `CLONE` is `0x0000000000000000000000000000000000000000`, stop: "Error: CoW Swap clone not found. Run /add-protocols intent first."
+If `CLONE` is `0x0000000000000000000000000000000000000000`, stop: "Error: CoW Swap clone not found. ask the vault owner to add the CoW Swap protocol via the web app."
 
 ### 3. Check TWAP is active and get current part hash
 
