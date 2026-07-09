@@ -1,6 +1,6 @@
 # BittyVault Claude Code Skills
 
-Claude Code slash commands for managing a [BittyVault](https://github.com/your-org/bittyvault) DeFi vault on Ethereum — deploy, fund, swap, lend, stake, and manage liquidity, all from the Claude Code CLI.
+Claude Code slash commands for managing a [BittyVault](https://github.com/bittyIO/vault) DeFi vault on Ethereum — deploy, fund, swap, lend, stake, and manage liquidity, all from the Claude Code CLI.
 
 ## Prerequisites
 
