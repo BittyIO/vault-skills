@@ -22,8 +22,6 @@ If any are missing, stop and print: "Usage: /supply <asset> <amount>"
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-Lending protocol (Aave V3): `0x66716637fF73C14C6536E494099D4a8Ea0e71206`
-
 ---
 
 ## Steps
@@ -34,6 +32,14 @@ Lending protocol (Aave V3): `0x66716637fF73C14C6536E494099D4a8Ea0e71206`
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
+
+Then resolve the lending protocol registered on the vault:
+
+```bash
+LENDING_PROTOCOL=$(cast call $VAULT_ADDRESS "getLendingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+```
+
+If `$LENDING_PROTOCOL` is empty, stop: `Error: no Aave lending protocol registered on this vault.`
 
 ### 2. Resolve asset address and decimals
 
@@ -75,7 +81,7 @@ Deposit funds into the vault before supplying.
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
+  "$LENDING_PROTOCOL" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -91,7 +97,7 @@ Print:
 Vault           : $VAULT_ADDRESS
 Asset           : <asset_symbol> (<asset_address>)
 Amount          : <amount> <asset_symbol> (<amount_raw> raw)
-Lending protocol: 0x66716637fF73C14C6536E494099D4a8Ea0e71206
+Lending protocol: $LENDING_PROTOCOL
 Currently supplied: <supplied_before> (raw)
 ```
 
@@ -103,7 +109,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "supply(address,address,uint256)" \
-  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
+  "$LENDING_PROTOCOL" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "<rpc_url>" \
@@ -119,7 +125,7 @@ After the transaction confirms, fetch the new supplied balance:
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
+  "$LENDING_PROTOCOL" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```

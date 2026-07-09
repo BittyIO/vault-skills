@@ -12,12 +12,6 @@ Parse `$ARGUMENTS` as optional request IDs (all tokens).
 
 ---
 
-## Hardcoded Sepolia configuration
-
-Staking protocol: `0x91F7682054cfE444A1E0e84F654010E2F7a69421`
-
----
-
 ## Steps
 
 ### 1. Check environment variables
@@ -25,6 +19,22 @@ Staking protocol: `0x91F7682054cfE444A1E0e84F654010E2F7a69421`
 ```bash
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+```
+
+### Resolve the Lido staking protocol
+
+A vault may have multiple staking protocols registered (e.g. Lido and Sky). Read them from the vault on-chain and pick the Lido one — identified because only the Lido protocol responds to `stETH()`:
+
+```bash
+STAKING_PROTOCOL=""
+for p in $(cast call $VAULT_ADDRESS "getStakingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[]' | tr ',' ' '); do
+  if cast call "$p" "stETH()(address)" --rpc-url "<rpc_url>" >/dev/null 2>&1; then STAKING_PROTOCOL="$p"; break; fi
+done
+```
+
+If `$STAKING_PROTOCOL` is empty, stop and print:
+```
+Error: no Lido staking protocol registered on this vault.
 ```
 
 ### 2. Resolve request IDs
@@ -36,7 +46,7 @@ Otherwise fetch all pending IDs from the vault:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
+  "$STAKING_PROTOCOL" \
   --rpc-url "<rpc_url>"
 ```
 
@@ -65,7 +75,7 @@ Save as `<weth_before>`.
 Print:
 ```
 Vault             : $VAULT_ADDRESS
-Staking protocol  : 0x91F7682054cfE444A1E0e84F654010E2F7a69421
+Staking protocol  : $STAKING_PROTOCOL
 Request IDs       : <request_ids>
 Vault WETH balance: <weth_before> (raw)
 ```
@@ -78,7 +88,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "claimUnstaked(address,uint256[])" \
-  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
+  "$STAKING_PROTOCOL" \
   "<request_ids_array>" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"
@@ -99,7 +109,7 @@ cast call 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 \
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
+  "$STAKING_PROTOCOL" \
   --rpc-url "<rpc_url>"
 ```
 

@@ -12,8 +12,6 @@ Parse `$ARGUMENTS` as one part. If missing, stop and print usage.
 
 ## Hardcoded mainnet configuration
 
-AMM protocol (UniswapV3): `0x66716637fF73C14C6536E494099D4a8Ea0e71206`
-
 UniswapV3 NonfungiblePositionManager (mainnet): `0xC36442b4a4522E871399CD717aBDD847Ab11FE88`
 
 ---
@@ -26,6 +24,14 @@ UniswapV3 NonfungiblePositionManager (mainnet): `0xC36442b4a4522E871399CD717aBDD
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
+
+Then resolve the AMM protocol registered on the vault:
+
+```bash
+AMM_PROTOCOL=$(cast call $VAULT_ADDRESS "getAMMProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+```
+
+If `$AMM_PROTOCOL` is empty, stop: `Error: no Uniswap AMM protocol registered on this vault.`
 
 ### 2. Fetch position info and uncollected fees
 
@@ -87,7 +93,7 @@ Token0             : <token0_address>
 Token1             : <token1_address>
 Uncollected fees0  : <tokensOwed0> (raw)
 Uncollected fees1  : <tokensOwed1> (raw)
-AMM protocol       : 0x66716637fF73C14C6536E494099D4a8Ea0e71206
+AMM protocol       : $AMM_PROTOCOL
 ```
 
 Ask: "Proceed with claiming fees? (yes/no)"
@@ -98,7 +104,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "claimAMMFees(address,bytes)" \
-  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
+  "$AMM_PROTOCOL" \
   "$DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

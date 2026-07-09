@@ -6,21 +6,24 @@ No arguments needed. Reads `$VAULT_ADDRESS` from env.
 
 ---
 
-## Hardcoded mainnet configuration
-
-Lending protocol (Aave V3): `0x66716637fF73C14C6536E494099D4a8Ea0e71206`
-
-Staking protocol (Lido V2): `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9`
-
----
-
 ## Steps
 
-### 1. Check environment variables
+### 1. Check environment variables and resolve protocols
+
+The lending (Aave) and staking (Lido) protocols are read from the vault on-chain, so this works for a vault created by any factory version. A mainnet vault has both Lido and Sky staking protocols registered — the Lido one is identified because only it responds to `stETH()`.
 
 ```bash
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+
+LENDING_PROTOCOL=$(cast call $VAULT_ADDRESS "getLendingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+
+STAKING_PROTOCOL=""
+for p in $(cast call $VAULT_ADDRESS "getStakingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[]' | tr ',' ' '); do
+  if cast call "$p" "stETH()(address)" --rpc-url "<rpc_url>" >/dev/null 2>&1; then STAKING_PROTOCOL="$p"; break; fi
+done
 ```
+
+If `$LENDING_PROTOCOL` is empty, show the Supplied column as 0. If `$STAKING_PROTOCOL` is empty, show the Staked column as 0 and skip the pending-unstake section.
 
 ### 2. Fetch the asset and stablecoin lists from the vault
 
@@ -49,7 +52,7 @@ cast call <token_address> \
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x66716637fF73C14C6536E494099D4a8Ea0e71206" \
+  "$LENDING_PROTOCOL" \
   "<token_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -58,7 +61,7 @@ cast call $VAULT_ADDRESS \
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
+  "$STAKING_PROTOCOL" \
   "<token_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -104,7 +107,7 @@ Finally print a pending unstake section if there are any:
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
+  "$STAKING_PROTOCOL" \
   --rpc-url "<rpc_url>"
 ```
 

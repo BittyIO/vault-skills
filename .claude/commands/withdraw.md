@@ -21,8 +21,6 @@ If any are missing, stop and print: "Usage: /withdraw <asset> <amount>"
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-Lending protocol: `0x472eDb79A83cC8470473Df20dD49a85E91769b98`
-
 ---
 
 ## Steps
@@ -33,6 +31,14 @@ Lending protocol: `0x472eDb79A83cC8470473Df20dD49a85E91769b98`
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
+
+Then resolve the lending protocol registered on the vault:
+
+```bash
+LENDING_PROTOCOL=$(cast call $VAULT_ADDRESS "getLendingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+```
+
+If `$LENDING_PROTOCOL` is empty, stop: `Error: no Aave lending protocol registered on this vault.`
 
 ### 2. Resolve asset address and decimals
 
@@ -49,7 +55,7 @@ cast call <asset_address> "decimals()(uint8)" \
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x472eDb79A83cC8470473Df20dD49a85E91769b98" \
+  "$LENDING_PROTOCOL" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -81,7 +87,7 @@ Print:
 Vault             : $VAULT_ADDRESS
 Asset             : <asset_symbol> (<asset_address>)
 Amount            : <amount> <asset_symbol> (<amount_raw> raw)
-Lending protocol  : 0x472eDb79A83cC8470473Df20dD49a85E91769b98
+Lending protocol  : $LENDING_PROTOCOL
 Supplied balance  : <supplied_balance> (raw)
 Remaining after   : <supplied_balance - amount_raw> (raw)
 ```
@@ -94,7 +100,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "withdraw(address,address,uint256)" \
-  "0x472eDb79A83cC8470473Df20dD49a85E91769b98" \
+  "$LENDING_PROTOCOL" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "<rpc_url>" \
@@ -110,7 +116,7 @@ Fetch the new supplied balance and vault token balance after the tx:
 ```bash
 cast call $VAULT_ADDRESS \
   "getSuppliedBalance(address,address)(uint256)" \
-  "0x472eDb79A83cC8470473Df20dD49a85E91769b98" \
+  "$LENDING_PROTOCOL" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```

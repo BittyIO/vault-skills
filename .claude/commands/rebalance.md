@@ -26,8 +26,6 @@ If the first 4 are missing, stop and print usage.
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-AMM protocol: `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26`
-
 ---
 
 ## Steps
@@ -38,6 +36,14 @@ AMM protocol: `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26`
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
+
+Then resolve the AMM protocol registered on the vault:
+
+```bash
+AMM_PROTOCOL=$(cast call $VAULT_ADDRESS "getAMMProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+```
+
+If `$AMM_PROTOCOL` is empty, stop: `Error: no Uniswap AMM protocol registered on this vault.`
 
 ### 2. Resolve asset addresses and decimals
 
@@ -101,7 +107,7 @@ Vault         : $VAULT_ADDRESS
 Sell          : <sell_amount> <from_asset_symbol> (<sell_amount_raw> raw)
 Buy (min)     : <buy_amount_min> <to_asset_symbol> (<buy_amount_min_raw> raw)
 Pool fee      : <fee_tier> (<fee_tier/10000>%)
-AMM protocol  : 0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26
+AMM protocol  : $AMM_PROTOCOL
 Swap path     : <from_asset_symbol> --[<fee_tier>]--> <to_asset_symbol>
 ```
 
@@ -113,7 +119,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "marketSell(address,address,address,uint256,uint256,bytes)" \
-  "0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26" \
+  "$AMM_PROTOCOL" \
   "<from_asset_address>" \
   "<to_asset_address>" \
   "<sell_amount_raw>" \

@@ -24,8 +24,6 @@ If any are missing, stop and print: "Usage: /unstake <asset> <amount>"
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-Staking protocol: `0x91F7682054cfE444A1E0e84F654010E2F7a69421`
-
 ---
 
 ## Steps
@@ -35,6 +33,22 @@ Staking protocol: `0x91F7682054cfE444A1E0e84F654010E2F7a69421`
 ```bash
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+```
+
+### Resolve the Lido staking protocol
+
+A vault may have multiple staking protocols registered (e.g. Lido and Sky). Read them from the vault on-chain and pick the Lido one — identified because only the Lido protocol responds to `stETH()`:
+
+```bash
+STAKING_PROTOCOL=""
+for p in $(cast call $VAULT_ADDRESS "getStakingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[]' | tr ',' ' '); do
+  if cast call "$p" "stETH()(address)" --rpc-url "<rpc_url>" >/dev/null 2>&1; then STAKING_PROTOCOL="$p"; break; fi
+done
+```
+
+If `$STAKING_PROTOCOL` is empty, stop and print:
+```
+Error: no Lido staking protocol registered on this vault.
 ```
 
 ### 2. Resolve asset address and decimals
@@ -52,7 +66,7 @@ cast call <asset_address> "decimals()(uint8)" \
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
+  "$STAKING_PROTOCOL" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -82,7 +96,7 @@ Error: Unstake amount exceeds staked balance.
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
+  "$STAKING_PROTOCOL" \
   --rpc-url "<rpc_url>"
 ```
 
@@ -95,7 +109,7 @@ Print:
 Vault              : $VAULT_ADDRESS
 Asset              : <asset_symbol> (<asset_address>)
 Amount             : <amount> <asset_symbol> (<amount_raw> raw)
-Staking protocol   : 0x91F7682054cfE444A1E0e84F654010E2F7a69421
+Staking protocol   : $STAKING_PROTOCOL
 Staked balance     : <staked_balance> (raw)
 Remaining staked   : <staked_balance - amount_raw> (raw)
 Pending request IDs: <request_ids_before>
@@ -112,7 +126,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "unstake(address,address,uint256)" \
-  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
+  "$STAKING_PROTOCOL" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "<rpc_url>" \
@@ -126,7 +140,7 @@ If the transaction reverts, print the revert reason and stop.
 ```bash
 cast call $VAULT_ADDRESS \
   "getUnstakeRequestIds(address)(uint256[])" \
-  "0x91F7682054cfE444A1E0e84F654010E2F7a69421" \
+  "$STAKING_PROTOCOL" \
   --rpc-url "<rpc_url>"
 ```
 

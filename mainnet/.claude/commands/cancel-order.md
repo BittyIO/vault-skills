@@ -12,7 +12,7 @@ Parse `$ARGUMENTS` as: first token is `<order_id>`. If missing, stop and print u
 
 ## Hardcoded mainnet configuration
 
-CoW Swap intent protocol (mainnet): `0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca`
+CoW Swap intent protocol: resolved from the vault on-chain (see step 2).
 CoW Swap explorer (mainnet): `https://explorer.cow.fi/`
 
 ---
@@ -29,8 +29,11 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ### 2. Encode the cancel data
 
 ```bash
+INTENT_PROTOCOL=$(cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
 CANCEL_DATA=$(cast abi-encode "f(bytes32)" "<order_id>")
 ```
+
+If `$INTENT_PROTOCOL` is empty, stop: "Error: no CoW Swap protocol registered on this vault. Ask the vault owner to add it via the web app (Manage → Protocols)."
 
 ### 3. Show preview and ask for confirmation
 
@@ -38,7 +41,7 @@ CANCEL_DATA=$(cast abi-encode "f(bytes32)" "<order_id>")
 ⚠ Cancel CoW Swap limit order — MAINNET
 Vault            : $VAULT_ADDRESS
 Order ID         : <order_id>
-Intent protocol  : 0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca
+Intent protocol  : $INTENT_PROTOCOL
 CoW Explorer     : https://explorer.cow.fi/orders/<order_id>
 ```
 
@@ -49,7 +52,7 @@ Ask: "Cancel this order on MAINNET? (yes/no)" — if no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "cancelLimitOrder(address,bytes)" \
-  "0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca" \
+  "$INTENT_PROTOCOL" \
   "$CANCEL_DATA" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

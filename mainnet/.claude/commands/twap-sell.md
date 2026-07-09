@@ -27,7 +27,7 @@ If first 6 are missing, stop and print usage.
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-CoW Swap intent protocol (mainnet): `0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca`
+CoW Swap intent protocol: resolved from the vault on-chain (see step 2).
 
 ⚠ **This operates on Ethereum mainnet with real funds.**
 
@@ -45,12 +45,11 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ### 2. Set intent protocol and verify registration
 
 ```bash
-INTENT_PROTOCOL=0xDf923AEFEe2Ac3a995C66f6998C52680154C56Ca
 RPC="<rpc_url>"
-cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC"
+INTENT_PROTOCOL=$(cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC" | tr -d '[] ' | cut -d, -f1)
 ```
 
-If `$INTENT_PROTOCOL` not in result, stop: "Error: CoW Swap protocol not registered. ask the vault owner to add it via the web app (Manage → Protocols)"
+If `$INTENT_PROTOCOL` is empty, stop: "Error: no CoW Swap protocol registered on this vault. Ask the vault owner to add it via the web app (Manage → Protocols)."
 
 ### 3. Get APP_DATA and clone address
 

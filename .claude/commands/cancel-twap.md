@@ -12,7 +12,7 @@ Parse `$ARGUMENTS` as: first token is `<twap_id>`. If missing, stop and print us
 
 ## Hardcoded Sepolia configuration
 
-CoW Swap intent protocol (Sepolia): `0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD`
+CoW Swap intent protocol: resolved from the vault on-chain (see step 2).
 
 ---
 
@@ -25,13 +25,19 @@ echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ```
 
-### 2. Show preview and ask for confirmation
+### 2. Resolve intent protocol, show preview and ask for confirmation
+
+```bash
+INTENT_PROTOCOL=$(cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+```
+
+If `$INTENT_PROTOCOL` is empty, stop: "Error: no CoW Swap protocol registered on this vault. Ask the vault owner to add it via the web app (Manage → Protocols)."
 
 ```
 Cancel CoW Swap TWAP order
 Vault            : $VAULT_ADDRESS
 TWAP ID          : <twap_id>
-Intent protocol  : 0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD
+Intent protocol  : $INTENT_PROTOCOL
 ```
 
 Ask: "Cancel this TWAP? (yes/no)" — if no, stop.
@@ -41,7 +47,7 @@ Ask: "Cancel this TWAP? (yes/no)" — if no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "cancelTwap(address,bytes32)" \
-  "0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD" \
+  "$INTENT_PROTOCOL" \
   "<twap_id>" \
   --rpc-url "<rpc_url>" \
   --private-key "$PRIVATE_KEY"

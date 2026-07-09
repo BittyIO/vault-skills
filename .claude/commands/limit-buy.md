@@ -24,7 +24,7 @@ If the first 4 are missing, stop and print usage.
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-CoW Swap intent protocol (Sepolia): `0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD`
+CoW Swap intent protocol: resolved from the vault on-chain (see step 2).
 CoW Swap explorer (Sepolia): `https://explorer.cow.fi/sepolia/`
 
 ---
@@ -41,12 +41,11 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-va
 ### 2. Set intent protocol and verify registration
 
 ```bash
-INTENT_PROTOCOL=0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD
 RPC="<rpc_url>"
-cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC"
+INTENT_PROTOCOL=$(cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC" | tr -d '[] ' | cut -d, -f1)
 ```
 
-If the result doesn't include `$INTENT_PROTOCOL`, stop: "Error: CoW Swap protocol not registered. ask the vault owner to add it via the web app (Manage → Protocols)"
+If `$INTENT_PROTOCOL` is empty, stop: "Error: no CoW Swap protocol registered on this vault. Ask the vault owner to add it via the web app (Manage → Protocols)."
 
 ### 3. Get APP_DATA from intent protocol
 

@@ -12,20 +12,13 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 ---
 
-## Hardcoded mainnet configuration
+## Mainnet configuration
 
 | Role | Address |
 |------|---------|
 | Factory | `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3` |
-| WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
-| WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` |
-| USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
-| USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` |
-| USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` |
-| Lending (Aave V3) | `0x66716637fF73C14C6536E494099D4a8Ea0e71206` |
-| Staking (Lido V2) | `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9` |
-| AMM (Uniswap V3) | `0x581ea6f54F14AC823f9541f761483263e8CfeB4a` |
-| Sky V1 | `0x26E671D35FCdC095E72Ebe40a3051bf4b90a56F7` |
+
+The vault is created with **all assets and protocols currently registered in the guard**, via `deployVaultAllSelected` — the factory resolves that set on-chain at deploy time, so no asset/protocol addresses are hardcoded here. Step 6 reads the resulting set back from the deployed vault.
 
 ---
 
@@ -53,8 +46,7 @@ Show the user a summary table:
 - Vault name: `<vault_name>`
 - Asset manager: `<asset_manager>`
 - Network: Ethereum mainnet
-- Protocols: all guard-registered (Aave V3, Lido V2, Uniswap V3, Sky V1)
-- Assets: all guard-registered (WETH, WBTC, USDC, USDT, USDS)
+- Assets & protocols: all currently registered in the guard (resolved on-chain by the factory at deploy time)
 
 ⚠ **This is Ethereum mainnet — real funds will be used. Double-check all addresses.**
 
@@ -87,14 +79,27 @@ cast call 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
 
 Save the output as `<vault_address>`.
 
-### 6. Save vault address to .env
+### 6. Read the registered assets and protocols from the new vault
+
+Confirm what the factory actually registered — read on-chain from the vault, not hardcoded:
+
+```bash
+cast call <vault_address> "getAssets()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getStableCoins()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getLendingProtocols()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getStakingProtocols()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getAMMProtocols()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getIntentProtocols()(address[])" --rpc-url "<rpc_url>"
+```
+
+### 7. Save vault address to .env
 
 Update `.env` so all other skills can use it without repeating the address:
 
 - If `VAULT_ADDRESS` already exists in `.env`, replace that line.
 - Otherwise append `VAULT_ADDRESS=<vault_address>` to `.env`.
 
-### 7. Print a deployment summary
+### 8. Print a deployment summary
 
 Print:
 - Transaction hash (from step 4)
@@ -102,4 +107,5 @@ Print:
 - Etherscan link: `https://etherscan.io/address/<vault_address>`
 - Owner: `<owner>`
 - Asset manager: `<asset_manager>`
+- Registered assets & protocols (from step 6)
 - VAULT_ADDRESS saved to `.env` ✓

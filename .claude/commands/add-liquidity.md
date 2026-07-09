@@ -27,8 +27,6 @@ Parse the first token as the mode (`mint` or `increase`). If missing or invalid,
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
 
-AMM protocol: `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26`
-
 **Tick spacing by fee tier** (ticks must be multiples of spacing):
 | Fee | Spacing |
 |-----|---------|
@@ -47,6 +45,14 @@ AMM protocol: `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26`
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
+
+Then resolve the AMM protocol registered on the vault:
+
+```bash
+AMM_PROTOCOL=$(cast call $VAULT_ADDRESS "getAMMProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+```
+
+If `$AMM_PROTOCOL` is empty, stop: `Error: no Uniswap AMM protocol registered on this vault.`
 
 ### 2. Compute deadline
 
@@ -119,7 +125,7 @@ Amount1       : <amount1> (<amount1_raw> raw)
 Fee tier      : <fee_tier>
 Tick range    : [<tick_lower>, <tick_upper>]
 Deadline      : <deadline_minutes> min from now
-AMM protocol  : 0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26
+AMM protocol  : $AMM_PROTOCOL
 ```
 
 Ask: "Proceed? (yes/no)"
@@ -129,7 +135,7 @@ Ask: "Proceed? (yes/no)"
 ```bash
 cast send $VAULT_ADDRESS \
   "addLiquidity(address,address,uint256,address,uint256,bytes)" \
-  "0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26" \
+  "$AMM_PROTOCOL" \
   "<token0_address>" "<amount0_raw>" \
   "<token1_address>" "<amount1_raw>" \
   "$DATA" \
@@ -186,7 +192,7 @@ Token1        : <token1_address>
 Amount0       : <amount0> (<amount0_raw> raw)
 Amount1       : <amount1> (<amount1_raw> raw)
 Deadline      : <deadline_minutes> min from now
-AMM protocol  : 0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26
+AMM protocol  : $AMM_PROTOCOL
 ```
 
 Ask: "Proceed? (yes/no)"

@@ -12,21 +12,13 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 ---
 
-## Hardcoded Sepolia configuration
+## Sepolia configuration
 
 | Role | Address |
 |------|---------|
 | Factory | `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3` |
-| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
-| WETH_UNI | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
-| WETH_AAVE | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |
-| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` |
-| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` |
-| USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
-| Lending (Aave V3) | `0x472eDb79A83cC8470473Df20dD49a85E91769b98` |
-| Staking (Lido V2) | `0x91F7682054cfE444A1E0e84F654010E2F7a69421` |
-| AMM (Uniswap V3) | `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26` |
-| Intent (CoW Swap V1) | `0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD` |
+
+The vault is created with **all assets and protocols currently registered in the guard**, via `deployVaultAllSelected` — the factory resolves that set on-chain at deploy time, so no asset/protocol addresses are hardcoded here. Step 6 reads the resulting set back from the deployed vault.
 
 ---
 
@@ -54,8 +46,7 @@ Show the user a summary table:
 - Vault name: `<vault_name>`
 - Asset manager: `<asset_manager>`
 - Network: Sepolia
-- Protocols: all guard-registered (Aave V3, Lido V2, Uniswap V3, CoW Swap V1)
-- Assets: all guard-registered (WETH, WETH_UNI, WETH_AAVE, WBTC, USDT, USDC)
+- Assets & protocols: all currently registered in the guard (resolved on-chain by the factory at deploy time)
 
 Ask: "Proceed with deployment? (yes/no)"
 
@@ -86,14 +77,27 @@ cast call 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
 
 Save the output as `<vault_address>`.
 
-### 6. Save vault address to .env
+### 6. Read the registered assets and protocols from the new vault
+
+Confirm what the factory actually registered — read on-chain from the vault, not hardcoded:
+
+```bash
+cast call <vault_address> "getAssets()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getStableCoins()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getLendingProtocols()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getStakingProtocols()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getAMMProtocols()(address[])" --rpc-url "<rpc_url>"
+cast call <vault_address> "getIntentProtocols()(address[])" --rpc-url "<rpc_url>"
+```
+
+### 7. Save vault address to .env
 
 Update `.env` so all other skills can use it without repeating the address:
 
 - If `VAULT_ADDRESS` already exists in `.env`, replace that line.
 - Otherwise append `VAULT_ADDRESS=<vault_address>` to `.env`.
 
-### 7. Print a deployment summary
+### 8. Print a deployment summary
 
 Print:
 - Transaction hash (from step 4)
@@ -101,4 +105,5 @@ Print:
 - Sepolia Etherscan link: `https://sepolia.etherscan.io/address/<vault_address>`
 - Owner: `<owner>`
 - Asset manager: `<asset_manager>`
+- Registered assets & protocols (from step 6)
 - VAULT_ADDRESS saved to `.env` ✓

@@ -11,7 +11,7 @@ If missing, stop and print usage.
 
 ---
 
-CoW Swap intent protocol (Sepolia): `0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD`
+CoW Swap intent protocol: resolved from the vault on-chain (see step 2).
 CoW Swap explorer (Sepolia): `https://explorer.cow.fi/sepolia/`
 
 ---
@@ -27,12 +27,13 @@ echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
 ### 2. Resolve clone address
 
 ```bash
-INTENT_PROTOCOL=0x480154016Bbc335Af34D0f5c75f3d0cbc17a2FfD
 RPC="<rpc_url>"
+INTENT_PROTOCOL=$(cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC" | tr -d '[] ' | cut -d, -f1)
 
 CLONE=$(cast call $VAULT_ADDRESS "getClone(address)(address)" "$INTENT_PROTOCOL" --rpc-url "$RPC")
 ```
 
+If `$INTENT_PROTOCOL` is empty, stop: "Error: no CoW Swap protocol registered on this vault. Ask the vault owner to add it via the web app (Manage → Protocols)."
 If `CLONE` is `0x0000000000000000000000000000000000000000`, stop: "Error: CoW Swap clone not found. ask the vault owner to add the CoW Swap protocol via the web app."
 
 ### 3. Check TWAP is active and get current part hash

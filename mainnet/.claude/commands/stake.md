@@ -22,8 +22,6 @@ If any are missing, stop and print: "Usage: /stake <asset> <amount>"
 | USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | 6 |
 | USDS | `0xdC035D45d973E3EC169d2276DDab16f1e407384F` | 18 |
 
-Staking protocol (Lido V2): `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9`
-
 ---
 
 ## Steps
@@ -33,6 +31,22 @@ Staking protocol (Lido V2): `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9`
 ```bash
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
 echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+```
+
+### Resolve the Lido staking protocol
+
+A vault may have multiple staking protocols registered (e.g. Lido and Sky). Read them from the vault on-chain and pick the Lido one — identified because only the Lido protocol responds to `stETH()`:
+
+```bash
+STAKING_PROTOCOL=""
+for p in $(cast call $VAULT_ADDRESS "getStakingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[]' | tr ',' ' '); do
+  if cast call "$p" "stETH()(address)" --rpc-url "<rpc_url>" >/dev/null 2>&1; then STAKING_PROTOCOL="$p"; break; fi
+done
+```
+
+If `$STAKING_PROTOCOL` is empty, stop and print:
+```
+Error: no Lido staking protocol registered on this vault.
 ```
 
 ### 2. Resolve asset address and decimals
@@ -79,7 +93,7 @@ Error: Stake amount exceeds vault balance.
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
+  "$STAKING_PROTOCOL" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```
@@ -95,7 +109,7 @@ Print:
 Vault            : $VAULT_ADDRESS
 Asset            : <asset_symbol> (<asset_address>)
 Amount           : <amount> <asset_symbol> (<amount_raw> raw)
-Staking protocol : 0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9
+Staking protocol : $STAKING_PROTOCOL
 Vault balance    : <vault_balance> (raw)
 Currently staked : <staked_before> (raw)
 ```
@@ -108,7 +122,7 @@ If no, stop.
 ```bash
 cast send $VAULT_ADDRESS \
   "stake(address,address,uint256)" \
-  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
+  "$STAKING_PROTOCOL" \
   "<asset_address>" \
   "<amount_raw>" \
   --rpc-url "<rpc_url>" \
@@ -124,7 +138,7 @@ Fetch the new staked balance after the tx:
 ```bash
 cast call $VAULT_ADDRESS \
   "getStakedBalance(address,address)(uint256)" \
-  "0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9" \
+  "$STAKING_PROTOCOL" \
   "<asset_address>" \
   --rpc-url "<rpc_url>"
 ```
