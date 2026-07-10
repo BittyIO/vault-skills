@@ -27,7 +27,7 @@ If `<owner>` or `<vault_name>` is missing, stop and print: "Usage: /quickstart <
 
 | Role | Address |
 |------|---------|
-| Factory | `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3` |
+| Factory | `0x000000005D584Fc878aAB46CDacd89A49e106844` |
 | Lending protocol (Aave V3) | `0x66716637fF73C14C6536E494099D4a8Ea0e71206` |
 | Staking protocol (Lido V2) | `0x68ED00Bd31E64ae77c19F9712dd1B27d4AA083b9` |
 | AMM protocol (UniswapV3) | `0x581ea6f54F14AC823f9541f761483263e8CfeB4a` |
@@ -149,7 +149,7 @@ Print: `✓ Balance confirmed: <balance> wei`
 Print: `[3/5] Deploying vault...`
 
 ```bash
-cast send 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
+cast send 0x000000005D584Fc878aAB46CDacd89A49e106844 \
   "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -160,7 +160,7 @@ cast send 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
 
 Compute the vault address:
 ```bash
-cast call 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
+cast call 0x000000005D584Fc878aAB46CDacd89A49e106844 \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "<rpc_url>"

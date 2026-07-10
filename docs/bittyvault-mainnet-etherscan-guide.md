@@ -20,7 +20,7 @@ Source: https://info.etherscan.com/how-to-use-read-or-write-contract-features-on
 
 | Name | Address |
 | --- | --- |
-| BittyVaultFactory | `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3` |
+| BittyVaultFactory | `0x000000005D584Fc878aAB46CDacd89A49e106844` |
 | WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
 | WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` |
 | USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
@@ -63,7 +63,7 @@ Do not grant `ASSET_MANAGER_ROLE` to the same address as the owner if the vault 
 ## 4. Create a Vault on Etherscan
 
 1. Open the factory page:
-   `https://etherscan.io/address/0x000000007B06f7C74A9c25a6E98dA37806f4DBA3#writeContract`
+   `https://etherscan.io/address/0x000000005D584Fc878aAB46CDacd89A49e106844#writeContract`
 2. Click `Connect to Web3`.
 3. Connect the deployer wallet. The mainnet skill uses the asset manager wallet as the transaction sender.
 4. Find `deployVaultAllSelected`.

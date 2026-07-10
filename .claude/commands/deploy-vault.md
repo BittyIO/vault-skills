@@ -1,4 +1,4 @@
-Deploy a new BittyVault on Sepolia via the factory at `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3`.
+Deploy a new BittyVault on Sepolia via the factory at `0x000000005D584Fc878aAB46CDacd89A49e106844`.
 
 **Usage:** `/deploy-vault <owner_address> [vault_name]`
 
@@ -16,7 +16,7 @@ If `<owner>` is missing, stop and tell the user: "Usage: /deploy-vault <owner_ad
 
 | Role | Address |
 |------|---------|
-| Factory | `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3` |
+| Factory | `0x000000005D584Fc878aAB46CDacd89A49e106844` |
 
 The vault is created with **all assets and protocols currently registered in the guard**, via `deployVaultAllSelected` — the factory resolves that set on-chain at deploy time, so no asset/protocol addresses are hardcoded here. Step 6 reads the resulting set back from the deployed vault.
 
@@ -55,7 +55,7 @@ If the user says no, stop.
 ### 4. Deploy the vault
 
 ```bash
-cast send 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
+cast send 0x000000005D584Fc878aAB46CDacd89A49e106844 \
   "deployVaultAllSelected(address,string,address[])" \
   "<owner>" \
   "<vault_name>" \
@@ -69,7 +69,7 @@ If the transaction fails, print the revert reason and stop.
 ### 5. Compute and display the vault address
 
 ```bash
-cast call 0x000000007B06f7C74A9c25a6E98dA37806f4DBA3 \
+cast call 0x000000005D584Fc878aAB46CDacd89A49e106844 \
   "computeVaultAddress(address,string)(address)" \
   "<owner>" "<vault_name>" \
   --rpc-url "<rpc_url>"

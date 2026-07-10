@@ -73,7 +73,7 @@ Owner operations (assets, protocols, receivers, roles, locks) are intentionally 
 
 | Contract | Address |
 |----------|---------|
-| BittyVaultFactory | `0x000000007B06f7C74A9c25a6E98dA37806f4DBA3` |
+| BittyVaultFactory | `0x000000005D584Fc878aAB46CDacd89A49e106844` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
 | WETH (Uniswap) | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
 | WETH (Aave) | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |
