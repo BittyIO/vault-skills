@@ -42,7 +42,7 @@ Parse the first token as the mode (`mint` or `increase`). If missing or invalid,
 
 ```bash
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — set it in .env to a vault where your key holds a seat}"
 ```
 
 Then resolve the AMM protocol registered on the vault:

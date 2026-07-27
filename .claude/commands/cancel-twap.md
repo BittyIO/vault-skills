@@ -42,11 +42,11 @@ Intent protocol  : $INTENT_PROTOCOL
 
 Ask: "Cancel this TWAP? (yes/no)" — if no, stop.
 
-### 3. Call cancelTwap on the vault
+### 3. Call cancelTwapOrder on the vault
 
 ```bash
 cast send $VAULT_ADDRESS \
-  "cancelTwap(address,bytes32)" \
+  "cancelTwapOrder(address,bytes32)" \
   "$INTENT_PROTOCOL" \
   "<twap_id>" \
   --rpc-url "<rpc_url>" \

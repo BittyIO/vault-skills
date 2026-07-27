@@ -1,6 +1,6 @@
 Create a CoW Swap TWAP buy (DCA) order on a BittyVault on Ethereum mainnet. Spends `sell_per_part` of the sell token every `interval` seconds across `n_parts` parts, accumulating at least `total_buy / n_parts` of the buy token per slot.
 
-Under the hood this is a sell TWAP: totalSellAmount = sell_per_part × n_parts, minPartLimit = total_buy / n_parts.
+Under the hood this is a sell TWAP: totalSellAmount = sell_per_part × n_parts, minPartLimit = total_buy / n_parts. Part 0 is posted immediately; post each subsequent slot at its window with `/post-twap-part`.
 
 **Usage:** `/twap-buy <from_asset> <to_asset> <total_buy> <sell_per_part> <n_parts> <interval> [span]`
 
@@ -93,31 +93,109 @@ Intent protocol    : $INTENT_PROTOCOL
 
 Ask: "Create TWAP buy on MAINNET? (yes/no)" — if no, stop.
 
-### 6. Call twapBuy on the vault
+### 6. Simulate to get twapId, then call twapBuy on the vault
 
 ```bash
-cast send $VAULT_ADDRESS \
+RPC="<rpc_url>"
+ASSET_MANAGER=$(cast wallet address --private-key "$PRIVATE_KEY")
+
+TWAP_ID=$(cast call $VAULT_ADDRESS \
   "twapBuy(address,address,address,uint256,uint256,uint256,uint256,uint256)(bytes32)" \
-  "$INTENT_PROTOCOL" \
-  "<from_asset_address>" \
-  "<to_asset_address>" \
-  "<total_buy_raw>" \
-  "<sell_per_part_raw>" \
-  "<n_parts>" \
-  "<interval>" \
-  "<span>" \
-  --rpc-url "<rpc_url>" \
-  --private-key "$PRIVATE_KEY"
+  "$INTENT_PROTOCOL" "<from_asset_address>" "<to_asset_address>" \
+  "<total_buy_raw>" "<sell_per_part_raw>" "<n_parts>" "<interval>" "<span>" \
+  --from "$ASSET_MANAGER" --rpc-url "$RPC")
+
+TX_HASH=$(cast send $VAULT_ADDRESS \
+  "twapBuy(address,address,address,uint256,uint256,uint256,uint256,uint256)" \
+  "$INTENT_PROTOCOL" "<from_asset_address>" "<to_asset_address>" \
+  "<total_buy_raw>" "<sell_per_part_raw>" "<n_parts>" "<interval>" "<span>" \
+  --rpc-url "$RPC" --private-key "$PRIVATE_KEY" \
+  --json | python3 -c "import json,sys; print(json.load(sys.stdin)['transactionHash'])")
 ```
 
-### 7. Show result
+### 6b. Derive the per-TWAP appData from the mined block and register it with CoW
+
+The protocol clone derived a per-TWAP appData hash **on-chain** from the registration block's
+timestamp (the salt), with the 0.2% partner fee baked in — a user cannot strip the fee. Read
+that exact timestamp, rebuild the byte-identical document, hash it, and PUT it to CoW.
+
+```bash
+BLOCK_NUM=$(cast receipt "$TX_HASH" blockNumber --rpc-url "$RPC")
+BLOCK_TS=$(cast block "$BLOCK_NUM" -f timestamp --rpc-url "$RPC")
+
+# MUST be byte-identical to the contract's twapFullAppData(salt): same key order, compact
+# spacing, checksummed recipient (0x12EE2de7…). The salt rides in the free-form `environment`.
+FULL_APP_DATA='{"appCode":"BittyVault","environment":"'"$BLOCK_TS"'","metadata":{"partnerFee":{"bps":20,"recipient":"0x12EE2de7BF086388B1D560eb95e7191Edfab9823"}},"version":"1.3.0"}'
+APP_DATA=$(cast keccak "$FULL_APP_DATA")
+
+APP_DATA_BODY=$(python3 -c "import json,sys; print(json.dumps({'fullAppData': sys.argv[1]}))" "$FULL_APP_DATA")
+curl -s -X PUT "https://api.cow.fi/mainnet/api/v1/app_data/$APP_DATA" \
+  -H "Content-Type: application/json" -d "$APP_DATA_BODY" >/dev/null
+```
+
+### 7. Post part 0 to CoW API immediately
+
+twapBuy is a sell TWAP under the hood: sell `sell_per_part_raw` of the from-asset per slot,
+receive at least `min_part_limit = total_buy_raw / n_parts` of the to-asset. Part 0's validTo
+MUST come from the block timestamp (the on-chain part hash uses `blockTimestamp + effectiveSpan`).
+
+```bash
+MIN_PART_LIMIT=$(python3 -c "print(<total_buy_raw> // <n_parts>)")
+EFFECTIVE_SPAN=$(python3 -c "s=<span>; d=<interval>; print(s if s > 0 else d)")
+PART0_VALID_TO=$(python3 -c "print($BLOCK_TS + $EFFECTIVE_SPAN)")
+
+JSON_BODY=$(python3 -c "
+import json
+print(json.dumps({
+    'sellToken': '<from_asset_address>',
+    'buyToken': '<to_asset_address>',
+    'receiver': '$VAULT_ADDRESS',
+    'sellAmount': '<sell_per_part_raw>',
+    'buyAmount': str($MIN_PART_LIMIT),
+    'validTo': $PART0_VALID_TO,
+    'appData': '$APP_DATA',
+    'feeAmount': '0',
+    'kind': 'sell',
+    'partiallyFillable': False,
+    'signingScheme': 'eip1271',
+    'signature': '0x',
+    'from': '$VAULT_ADDRESS',
+    'sellTokenBalance': 'erc20',
+    'buyTokenBalance': 'erc20'
+}))
+")
+
+COW_RESPONSE=$(curl -s -X POST "https://api.cow.fi/mainnet/api/v1/orders" \
+  -H "Content-Type: application/json" \
+  -d "$JSON_BODY")
+
+COW_UID=$(python3 -c "
+import json, sys
+resp = '$COW_RESPONSE'
+try:
+    parsed = json.loads(resp)
+    if isinstance(parsed, str):
+        print(parsed)
+    else:
+        print('COW_API_ERROR: ' + json.dumps(parsed), flush=True)
+except:
+    print('COW_PARSE_ERROR: ' + resp, flush=True)
+")
+```
+
+If `COW_UID` starts with `COW_API_ERROR` or `COW_PARSE_ERROR`, print the error and stop.
+
+### 8. Show result
 
 ```
 TWAP buy created!
   Tx hash          : <tx_hash>
   Etherscan        : https://etherscan.io/tx/<tx_hash>
-  TWAP ID          : <twapId>
+  TWAP ID          : <TWAP_ID>
+  Part 0 UID       : <COW_UID>
   Buy (min total)  : <total_buy> <to_symbol> over <n_parts> parts
+  CoW Explorer     : https://explorer.cow.fi/orders/<COW_UID>
 
-Save the TWAP ID to cancel: /cancel-twap <twapId>
+To post subsequent parts when each window opens: /post-twap-part <TWAP_ID>
+To cancel the TWAP: /cancel-twap <TWAP_ID>
 ```

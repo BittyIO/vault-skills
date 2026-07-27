@@ -48,17 +48,42 @@ PART_HASH=$(cast call $CLONE "getCurrentTwapPartHash(bytes32)(bytes32)" "$TWAP_I
 If `IS_ACTIVE` is `false`, stop: "Error: TWAP $TWAP_ID is not active (either not started, expired, or outside execution window)."
 If `PART_HASH` is `0x0000000000000000000000000000000000000000000000000000000000000000`, stop: "Error: No executable part in the current window."
 
-### 4. Get TWAP params and APP_DATA
+### 4. Get TWAP params (incl. the per-TWAP appData) and re-register the document
+
+Each TWAP has its **own** appData hash derived on-chain from the registration block timestamp
+(the salt), with the 0.2% partner fee baked in — do **not** use the static `APP_DATA()`. The
+hash is stored as the final field of the struct, so read it straight from `twapOrders`:
 
 ```bash
-APP_DATA=$(cast call $CLONE "APP_DATA()(bytes32)" --rpc-url "$RPC")
-
-# TwapParams: (address sellToken, address buyToken, uint256 sellAmountPerPart, uint256 buyAmountMinPerPart, uint32 startTime, uint32 partDuration, uint32 span, uint32 n)
-TWAP_PARAMS=$(cast call $CLONE "twapOrders(bytes32)(address,address,uint256,uint256,uint32,uint32,uint32,uint32)" \
+# TwapParams: (address sellToken, address buyToken, uint256 sellAmountPerPart,
+#   uint256 buyAmountMinPerPart, uint32 startTime, uint32 partDuration, uint32 span,
+#   uint32 n, bytes32 appData)
+TWAP_PARAMS=$(cast call $CLONE "twapOrders(bytes32)(address,address,uint256,uint256,uint32,uint32,uint32,uint32,bytes32)" \
   "$TWAP_ID" --rpc-url "$RPC")
 ```
 
-Parse the output to extract: sell_token, buy_token, sell_amount_per_part, buy_amount_min, start_time, part_duration, span, n.
+Parse the output to extract: sell_token, buy_token, sell_amount_per_part, buy_amount_min,
+start_time, part_duration, span, n, **app_data** (the last field).
+
+```bash
+APP_DATA=<app_data>
+```
+
+Re-register the fee document with CoW (idempotent — safe to repeat every part). The salt equals
+`start_time` (both are the registration block.timestamp; `uint32(block.timestamp)` doesn't
+truncate before year 2106), so the document rebuilds byte-identically:
+
+```bash
+FULL_APP_DATA='{"appCode":"BittyVault","environment":"'"<start_time>"'","metadata":{"partnerFee":{"bps":20,"recipient":"0x12EE2de7BF086388B1D560eb95e7191Edfab9823"}},"version":"1.3.0"}'
+
+# Sanity check: the rebuilt hash MUST equal the stored appData, else params were misparsed.
+REBUILT=$(cast keccak "$FULL_APP_DATA")
+[ "$REBUILT" = "$APP_DATA" ] || { echo "Error: rebuilt appData $REBUILT != stored $APP_DATA — aborting."; exit 1; }
+
+APP_DATA_BODY=$(python3 -c "import json,sys; print(json.dumps({'fullAppData': sys.argv[1]}))" "$FULL_APP_DATA")
+curl -s -X PUT "https://api.cow.fi/sepolia/api/v1/app_data/$APP_DATA" \
+  -H "Content-Type: application/json" -d "$APP_DATA_BODY" >/dev/null
+```
 
 Compute current part validTo:
 

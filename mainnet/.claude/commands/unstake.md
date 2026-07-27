@@ -33,7 +33,7 @@ If any are missing, stop and print: "Usage: /unstake <asset> <amount>"
 
 ```bash
 echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — set it in .env to a vault where your key holds a seat}"
 ```
 
 ### Resolve the Lido staking protocol

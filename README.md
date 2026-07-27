@@ -1,18 +1,20 @@
 # BittyVault Claude Code Skills
 
-Claude Code slash commands for managing a [BittyVault](https://github.com/bittyIO/vault) DeFi vault on Ethereum — deploy, fund, swap, lend, stake, and manage liquidity, all from the Claude Code CLI.
+Claude Code slash commands for the two **delegated roles** of a [BittyVault](https://github.com/bittyIO/vault) — the **asset manager** (swap, lend, stake, manage liquidity) and the **payout operator** (propose payments) — all from the Claude Code CLI.
+
+Everything owner-side — activating the vault, granting these roles, approving proposals, risk settings, giving up ownership — lives in the Bitty web app, where the owner signs with their own wallet. Vault ownership is **non-transferable** (one address, one vault, renounce-to-zero only), so there are no ownership skills here by design: the owner key never touches this CLI.
 
 ## Prerequisites
 
 - [Claude Code](https://claude.ai/code) installed
 - [Foundry](https://getfoundry.sh) (`cast` in your PATH)
-- An Alchemy API key for Sepolia RPC access
+- An Alchemy API key for RPC access (optional — falls back to a public endpoint)
 - A `.env` file in your working directory:
 
 ```bash
 ALCHEMY_KEY=your_alchemy_key_here
-PRIVATE_KEY=            # filled in by /new-assetmanager
-VAULT_ADDRESS=          # filled in by /deploy-vault
+PRIVATE_KEY=            # the asset manager's or payout operator's hot-wallet key
+VAULT_ADDRESS=          # the vault you hold a seat in (the owner grants seats in the web app)
 ```
 
 ## Install
@@ -26,31 +28,17 @@ claude
 
 > Skills live in `.claude/commands/` and are picked up by Claude Code automatically when you open it in this directory.
 
-## Quick start
-
-Run the full end-to-end demo in one command:
-
-```
-/quickstart <owner_address>
-```
-
-This walks through all 11 steps interactively: generate an AI asset manager, deploy a vault, fund it with WETH, swap, supply to Aave, stake in Lido, and more.
-
 ## Skills reference
 
-### Setup
+### Shared
 
 | Skill | Usage | Description |
 |-------|-------|-------------|
-| `/quickstart` | `/quickstart <owner> [amount]` | End-to-end demo — runs all steps in sequence |
-| `/new-assetmanager` | `/new-assetmanager` | Generate a fresh AI asset manager keypair |
-| `/deploy-vault` | `/deploy-vault <owner> [name]` | Deploy a new BittyVault via the factory |
-| `/fund-vault` | `/fund-vault [amount_each]` | Wrap ETH → WETH/WETH_UNI/WETH_AAVE and send to vault |
 | `/vault-balances` | `/vault-balances` | Show all asset balances held in the vault |
 
-### Asset manager skills (ASSET_MANAGER_ROLE)
+### Asset manager skills
 
-Requires `PRIVATE_KEY` in `.env` (the asset manager's hot wallet key).
+Requires `PRIVATE_KEY` in `.env` (the asset manager's hot wallet key, set by the owner via `setAssetManager` / `setFullAssetManager` in the web app).
 
 | Skill | Usage | Description |
 |-------|-------|-------------|
@@ -63,17 +51,26 @@ Requires `PRIVATE_KEY` in `.env` (the asset manager's hot wallet key).
 | `/add-liquidity` | `/add-liquidity mint\|increase ...` | Add liquidity to a Uniswap V3 position |
 | `/remove-liquidity` | `/remove-liquidity <tokenId> <pct> <deadline>` | Remove liquidity from a Uniswap V3 position |
 | `/claim-fees` | `/claim-fees <tokenId>` | Collect accumulated Uniswap V3 fees |
-| `/pay-receiver` | `/pay-receiver <name> [amount]` | Trigger a payment to a receiver |
+
+### Payout operator skills
+
+Requires `PRIVATE_KEY` in `.env` (a payout operator's key, granted a seat by the owner via `setPayoutOperator` in the web app). Proposals never move funds by themselves — the owner approves them in the web app.
+
+| Skill | Usage | Description |
+|-------|-------|-------------|
+| `/propose-payment` | `/propose-payment <recipient> <asset> <amount> <every_days> [count]` | Propose a scheduled payment (pending owner approval) |
+| `/propose-send` | `/propose-send <recipient> <asset> <amount>` | Propose a one-off send within the operator's rolling quota (pending owner approval) |
+| `/pay-scheduled` | `/pay-scheduled <id> [amount]` | Trigger a due scheduled payment by id (permissionless) |
 
 ### Vault owner management
 
-Owner operations (assets, protocols, receivers, roles, locks) are intentionally **not** CLI skills. The vault owner is typically a hardware wallet or multisig, and its key must never be exposed to the CLI. Manage these from the web app instead: open your vault and use **Manage**, signing with the connected owner wallet.
+Owner operations (activation, assets, protocols, approvals, roles, risk settings, giving up ownership) are intentionally **not** CLI skills. The vault owner is typically a hardware wallet or multisig, and its key must never be exposed to the CLI. Manage these from the web app instead, signing with the connected owner wallet.
 
 ## Sepolia contract addresses
 
 | Contract | Address |
 |----------|---------|
-| BittyVaultFactory | `0x000000005D584Fc878aAB46CDacd89A49e106844` |
+| BittyVaultFactory | `0x00008a00417a8Eeee5834e001DEFAE6aB600cB00` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
 | WETH (Uniswap) | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
 | WETH (Aave) | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |

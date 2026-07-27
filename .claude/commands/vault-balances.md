@@ -13,7 +13,7 @@ No arguments needed. Reads `$VAULT_ADDRESS` from env.
 The lending (Aave) and staking (Lido) protocols are read from the vault on-chain, so this works for a vault created by any factory version. The Lido protocol is the staking protocol that responds to `stETH()`.
 
 ```bash
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — set it in .env to a vault where your key holds a seat}"
 
 LENDING_PROTOCOL=$(cast call $VAULT_ADDRESS "getLendingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
 

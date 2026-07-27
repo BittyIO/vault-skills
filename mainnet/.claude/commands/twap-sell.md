@@ -51,12 +51,18 @@ INTENT_PROTOCOL=$(cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --r
 
 If `$INTENT_PROTOCOL` is empty, stop: "Error: no CoW Swap protocol registered on this vault. Ask the vault owner to add it via the web app (Manage → Protocols)."
 
-### 3. Get APP_DATA and clone address
+### 3. Get clone address
 
 ```bash
-APP_DATA=$(cast call $INTENT_PROTOCOL "APP_DATA()(bytes32)" --rpc-url "$RPC")
 CLONE=$(cast call $VAULT_ADDRESS "getClone(address)(address)" "$INTENT_PROTOCOL" --rpc-url "$RPC")
 ```
+
+> **Note on appData (fee enforcement).** Unlike limit orders, a TWAP does **not** use the
+> static `APP_DATA()`. The protocol clone derives a per-TWAP appData hash **on-chain** from
+> the block timestamp of the registration tx (the salt), with the 0.2% partner fee baked in —
+> a user cannot strip the fee. After the tx is mined we reconstruct the byte-identical
+> `fullAppData` document from that block's timestamp, register it with CoW, and post each part
+> with the derived hash (steps 7b–8).
 
 ### 4. Resolve assets and convert amounts to raw units
 
@@ -109,15 +115,36 @@ TX_HASH=$(cast send $VAULT_ADDRESS \
   --json | python3 -c "import json,sys; print(json.load(sys.stdin)['transactionHash'])")
 ```
 
-### 8. Post part 0 to CoW API immediately
+### 7b. Derive the per-TWAP appData from the mined block and register it with CoW
 
-Compute part 0 validTo and order details, then post:
+The contract used the registration block's timestamp as the appData salt. Read that exact
+timestamp, rebuild the byte-identical fee-bearing document, hash it, and PUT it to CoW so
+solvers can resolve the hash and apply the partner fee.
 
 ```bash
-START_TIME=$(python3 -c "import time; print(int(time.time()))")
+BLOCK_NUM=$(cast receipt "$TX_HASH" blockNumber --rpc-url "$RPC")
+BLOCK_TS=$(cast block "$BLOCK_NUM" -f timestamp --rpc-url "$RPC")
+
+# MUST be byte-identical to the contract's twapFullAppData(salt): same key order, compact
+# spacing, checksummed recipient (0x12EE2de7…). The salt rides in the free-form `environment`.
+FULL_APP_DATA='{"appCode":"BittyVault","environment":"'"$BLOCK_TS"'","metadata":{"partnerFee":{"bps":20,"recipient":"0x12EE2de7BF086388B1D560eb95e7191Edfab9823"}},"version":"1.3.0"}'
+APP_DATA=$(cast keccak "$FULL_APP_DATA")
+
+APP_DATA_BODY=$(python3 -c "import json,sys; print(json.dumps({'fullAppData': sys.argv[1]}))" "$FULL_APP_DATA")
+curl -s -X PUT "https://api.cow.fi/mainnet/api/v1/app_data/$APP_DATA" \
+  -H "Content-Type: application/json" -d "$APP_DATA_BODY" >/dev/null
+```
+
+### 8. Post part 0 to CoW API immediately
+
+Compute part 0 validTo and order details, then post. validTo MUST come from the block
+timestamp (the on-chain part hash uses `blockTimestamp + effectiveSpan` — wall-clock drift
+would break the signature):
+
+```bash
 SELL_PER_PART=$(python3 -c "print(<total_sell_raw> // <n_parts>)")
 EFFECTIVE_SPAN=$(python3 -c "s=<span>; d=<interval>; print(s if s > 0 else d)")
-PART0_VALID_TO=$(python3 -c "print($START_TIME + $EFFECTIVE_SPAN)")
+PART0_VALID_TO=$(python3 -c "print($BLOCK_TS + $EFFECTIVE_SPAN)")
 
 JSON_BODY=$(python3 -c "
 import json
