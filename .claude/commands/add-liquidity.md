@@ -21,11 +21,9 @@ Parse the first token as the mode (`mint` or `increase`). If missing or invalid,
 | Symbol | Address | Decimals |
 |--------|---------|----------|
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
-| WETH_UNI | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` | 18 |
-| WETH_AAVE | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` | 18 |
 | WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
-| USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` | 6 |
+| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
 
 **Tick spacing by fee tier** (ticks must be multiples of spacing):
 | Fee | Spacing |

@@ -1,6 +1,6 @@
 # BittyVault Claude Code Skills
 
-Claude Code slash commands for the two **delegated roles** of a [BittyVault](https://github.com/bittyIO/vault) — the **asset manager** (swap, lend, stake, manage liquidity) and the **payout operator** (propose payments) — all from the Claude Code CLI.
+Claude Code slash commands for the **delegated roles** of a [BittyVault](https://github.com/bittyIO/vault) — the **asset manager** (swap, lend, stake, manage liquidity), the **payout operator** (propose payments), and the **sub owner** (operate a sub-vault funded by the owner) — all from the Claude Code CLI.
 
 Everything owner-side — activating the vault, granting these roles, approving proposals, risk settings, giving up ownership — lives in the Bitty web app, where the owner signs with their own wallet. Vault ownership is **non-transferable** (one address, one vault, renounce-to-zero only), so there are no ownership skills here by design: the owner key never touches this CLI.
 
@@ -62,6 +62,17 @@ Requires `PRIVATE_KEY` in `.env` (a payout operator's key, granted a seat by the
 | `/propose-send` | `/propose-send <recipient> <asset> <amount>` | Propose a one-off send within the operator's rolling quota (pending owner approval) |
 | `/pay-scheduled` | `/pay-scheduled <id> [amount]` | Trigger a due scheduled payment by id (permissionless) |
 
+### Sub-vault (sub owner) skills
+
+A vault owner can grant a **sub-account** (a sub-vault) and name a **sub owner** for it in the Bitty web app. The sub owner sets `VAULT_ADDRESS` in `.env` to the **sub-vault address** (not the parent vault) and runs the same trade/earn skills against it — the shared vault facet treats the sub owner as `owner()` inside the sub-vault, so `/rebalance`, `/supply`, `/withdraw`, `/stake`, `/unstake`, `/claim-unstaked`, `/limit-buy`, `/limit-sell`, `/add-liquidity`, `/remove-liquidity`, `/claim-fees`, `/vault-balances`, etc. all work unchanged.
+
+Two operations are unique to the sub owner. Requires `PRIVATE_KEY` in `.env` (the sub owner's key) and `VAULT_ADDRESS` set to the sub-vault.
+
+| Skill | Usage | Description |
+|-------|-------|-------------|
+| `/return-to-vault` | `/return-to-vault <asset> <amount\|max> [<asset> <amount\|max> ...]` | Return assets from the sub-vault to the parent (the only way value leaves a sub-account) |
+| `/sub-gasless` | `/sub-gasless <daily_limit> <max_fee_per_op>` | Set the sub-vault's gasless daily budget and per-operation fee cap |
+
 ### Vault owner management
 
 Owner operations (activation, assets, protocols, approvals, roles, risk settings, giving up ownership) are intentionally **not** CLI skills. The vault owner is typically a hardware wallet or multisig, and its key must never be exposed to the CLI. Manage these from the web app instead, signing with the connected owner wallet.
@@ -70,20 +81,38 @@ Owner operations (activation, assets, protocols, approvals, roles, risk settings
 
 | Contract | Address |
 |----------|---------|
-| BittyVaultFactory | `0x00008a00417a8Eeee5834e001DEFAE6aB600cB00` |
+| BittyVaultFactory | `0xCe9c32Bf9720027EE0137153A3C5BC803570DCbf` |
+| BittyGuard | `0x00006Dc0000DBB00d9bd462ad2005E20007e0Dc7` |
+| TrustedForwarder | `0xfB49bE0861AC05bC690327076130342966429c03` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
-| WETH (Uniswap) | `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` |
-| WETH (Aave) | `0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c` |
 | WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` |
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` |
-| USDC | `0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8` |
-| Aave V3 Protocol | `0x472eDb79A83cC8470473Df20dD49a85E91769b98` |
-| Lido V2 Protocol | `0x91F7682054cfE444A1E0e84F654010E2F7a69421` |
-| Uniswap V3 Protocol | `0x68Edd39302545C2DFd3a8B25e36Da8059bacbD26` |
+| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` |
+| Aave adapter | `0x9C01F9b6Ed7BbD86f7a309A3414595608AB9d80d` |
+| Lido adapter | `0x9f6D7B2DeFCF45Cb837560209099083DDF59840a` |
+| Uniswap adapter | `0xc701E8d66d2762044B34303509A2606e6b05bB73` |
+| CoW adapter | `0x5A365990111B5A460526a25a8D4493dF103759DF` |
+
+## Mainnet contract addresses
+
+| Contract | Address |
+|----------|---------|
+| BittyVaultFactory | `0xCe9c32Bf9720027EE0137153A3C5BC803570DCbf` |
+| BittyGuard | `0x00006Dc0000DBB00d9bd462ad2005E20007e0Dc7` |
+| TrustedForwarder | `0xfB49bE0861AC05bC690327076130342966429c03` |
+| WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
+| WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` |
+| USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
+| USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` |
+| Aave adapter | `0x9296f7fFE86dA8B652988f07920b42F8779ce64b` |
+| Lido adapter | `0x35252547c41661103865d700d8fcACe07aFCe1Bd` |
+| Sky adapter | `0x0968632AD0A79220fFb2d2320De82b7C17357774` |
+| Uniswap adapter | `0xcE02C925850f8df20b5a6dE820e6773453240DbD` |
+| CoW adapter | `0x3d7589CD35400e0a1b8D6F5f8Ed3AE4171A5E195` |
 
 ## Known Sepolia limitations
 
-- **USDC on Aave**: USDC reserve is frozen (error 51) — use WETH_AAVE for lending demos instead
+- **USDC on Aave**: USDC reserve is frozen (error 51) — use WETH for lending demos instead
 - **Lido withdrawals**: The Lido withdrawal queue is paused on Sepolia — staking works but unstake requests will revert
 - **`buyAmountMin`**: Must be `≥ 1` (not `0`) on all rebalance calls
 
