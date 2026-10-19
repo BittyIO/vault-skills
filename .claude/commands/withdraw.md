@@ -3,7 +3,7 @@ Withdraw a supplied asset from the Aave lending protocol back into a BittyVault 
 **Usage:** `/withdraw <asset> <amount>`
 
 - `<asset>` — token symbol (WETH, WBTC, USDT, USDC) or a raw `0x…` address
-- `<amount>` — human-readable amount (e.g. `1.5` for 1.5 WETH), or `max` to withdraw everything
+- `<amount>` — human-readable amount (e.g. `1.5`), or `max` to withdraw everything
 
 Arguments: $ARGUMENTS
 
@@ -12,7 +12,7 @@ If any are missing, stop and print: "Usage: /withdraw <asset> <amount>"
 
 ---
 
-## Hardcoded Sepolia configuration
+## Sepolia tokens
 
 | Symbol | Address | Decimals |
 |--------|---------|----------|
@@ -25,115 +25,49 @@ If any are missing, stop and print: "Usage: /withdraw <asset> <amount>"
 
 ## Steps
 
-### 1. Check environment variables
+### 1. Check environment and resolve the lending protocol
 
 ```bash
-echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — set it in .env to a vault where your key holds a seat}"
+: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
+: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
+for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
+  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 2 ] && LENDING_PROTOCOL=$p
+done
 ```
 
-Then resolve the lending protocol registered on the vault:
+### 2. Read the position and resolve the amount
 
 ```bash
-LENDING_PROTOCOL=$(cast call $VAULT_ADDRESS "getLendingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+cast call $VAULT_ADDRESS "getBalances(address[],address[])(uint256[])" \
+  "[$LENDING_PROTOCOL]" "[<asset_address>]" --rpc-url "<rpc_url>"
 ```
 
-If `$LENDING_PROTOCOL` is empty, stop: `Error: no Aave lending protocol registered on this vault.`
+Save as `<supplied_before>`. If it is 0, stop: "Nothing supplied for <symbol>."
+`max` → `<supplied_before>`. Otherwise convert `<amount>` to raw units with the token's decimals; if it
+exceeds `<supplied_before>`, stop and show both.
 
-### 2. Resolve asset address and decimals
+### 3. Preview and confirm
 
-If `<asset>` matches a known symbol (case-insensitive), use the table above.
-If `<asset>` starts with `0x`, use it directly — then fetch its decimals:
+Print vault, asset, amount and `<supplied_before>`. Ask: "Proceed with withdraw? (yes/no)"
+
+### 4. Withdraw
 
 ```bash
-cast call <asset_address> "decimals()(uint8)" \
-  --rpc-url "<rpc_url>"
+cast send $VAULT_ADDRESS "withdraw(address,address,uint256)" \
+  $LENDING_PROTOCOL <asset_address> <amount_raw> \
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 ```
 
-### 3. Fetch current supplied balance
+Any live asset manager may withdraw — no permission bit is needed, since the funds land back in the vault.
 
-```bash
-cast call $VAULT_ADDRESS \
-  "getSuppliedBalance(address,address)(uint256)" \
-  "$LENDING_PROTOCOL" \
-  "<asset_address>" \
-  --rpc-url "<rpc_url>"
+### 5. Show result
+
+Re-read the position and the vault's token balance (`balanceOf`), then print:
 ```
-
-Save as `<supplied_balance>`.
-
-If `<supplied_balance>` is 0, stop and print:
-```
-Error: No supplied balance for <asset_symbol> in this vault.
-```
-
-### 4. Resolve amount to raw units
-
-- If `<amount>` is `max`, set `<amount_raw>` = `<supplied_balance>`.
-- If 18 decimals: `cast to-unit <amount>ether wei`
-- Other decimals: compute `<amount> * 10^<decimals>` as an integer
-
-If `<amount_raw>` > `<supplied_balance>`, stop and print:
-```
-Error: Withdrawal amount exceeds supplied balance.
-  Supplied balance : <supplied_balance> (raw)
-  Requested        : <amount_raw> (raw)
-```
-
-### 5. Show preview and ask for confirmation
-
-Print:
-```
-Vault             : $VAULT_ADDRESS
-Asset             : <asset_symbol> (<asset_address>)
-Amount            : <amount> <asset_symbol> (<amount_raw> raw)
-Lending protocol  : $LENDING_PROTOCOL
-Supplied balance  : <supplied_balance> (raw)
-Remaining after   : <supplied_balance - amount_raw> (raw)
-```
-
-Ask: "Proceed with withdrawal? (yes/no)"
-If no, stop.
-
-### 6. Call withdraw on the vault
-
-```bash
-cast send $VAULT_ADDRESS \
-  "withdraw(address,address,uint256)" \
-  "$LENDING_PROTOCOL" \
-  "<asset_address>" \
-  "<amount_raw>" \
-  --rpc-url "<rpc_url>" \
-  --private-key "$PRIVATE_KEY"
-```
-
-If the transaction reverts, print the revert reason and stop.
-
-### 7. Verify and show result
-
-Fetch the new supplied balance and vault token balance after the tx:
-
-```bash
-cast call $VAULT_ADDRESS \
-  "getSuppliedBalance(address,address)(uint256)" \
-  "$LENDING_PROTOCOL" \
-  "<asset_address>" \
-  --rpc-url "<rpc_url>"
-```
-
-```bash
-cast call <asset_address> \
-  "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "<rpc_url>"
-```
-
-Print a final summary:
-```
-Withdrawal successful!
-  Tx hash          : <tx_hash>
-  Etherscan        : https://sepolia.etherscan.io/tx/<tx_hash>
-  Asset withdrawn  : <amount> <asset_symbol>
-  Supplied before  : <supplied_balance> (raw)
-  Supplied after   : <supplied_after> (raw)
-  Vault balance    : <vault_balance> (raw)
+Withdraw successful!
+  Tx            : https://sepolia.etherscan.io/tx/<tx_hash>
+  Withdrawn     : <amount> <symbol>
+  Position      : <supplied_before> → <supplied_after> (raw)
+  Vault balance : <balance_after> (raw)
 ```

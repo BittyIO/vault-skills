@@ -1,74 +1,60 @@
-Cancel an active CoW Swap limit order on a BittyVault on Sepolia.
+Cancel a CoW Swap limit order of a BittyVault on Sepolia.
 
-**Usage:** `/cancel-order <order_id>`
+**Usage:** `/cancel-order <order_uid>`
 
-- `<order_id>` — the bytes32 orderId returned by `/limit-sell` or `/limit-buy`
+- `<order_uid>` — the 56-byte CoW order UID printed by `/limit-sell` or `/limit-buy`
 
 Arguments: $ARGUMENTS
 
-Parse `$ARGUMENTS` as: first token is `<order_id>`. If missing, stop and print usage.
+If missing, stop and print usage.
 
 ---
 
-## Hardcoded Sepolia configuration
-
-CoW Swap intent protocol: resolved from the vault on-chain (see step 2).
-CoW Swap explorer (Sepolia): `https://explorer.cow.fi/sepolia/`
+CoW's API cannot soft-cancel an eip1271 order, so the vault invalidates the UID on the CoW settlement
+contract itself with `cancelIntentOrder` — one on-chain transaction, after which the order can never
+settle. Any live asset manager may cancel (no permission bit needed). An order that is already filled
+or expired needs no cancel.
 
 ---
 
 ## Steps
 
-### 1. Check environment variables
+### 1. Check environment and resolve the intent protocol
 
 ```bash
-echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
+: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
+: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
+for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
+  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 4 ] && INTENT_PROTOCOL=$p
+done
 ```
 
-### 2. Encode the cancel data
-
-The order ID is a bytes32 value. Encode it as the bytes payload for `cancelTrade`, and resolve the intent protocol from the vault:
+### 2. Look up the order
 
 ```bash
-INTENT_PROTOCOL=$(cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
-CANCEL_DATA=$(cast abi-encode "f(bytes32)" "<order_id>")
+curl -s "https://api.cow.fi/sepolia/api/v1/orders/<order_uid>"
 ```
 
-If `$INTENT_PROTOCOL` is empty, stop: "Error: no CoW Swap protocol registered on this vault. Ask the vault owner to add it via the web app (Manage → Protocols)."
+Check `owner` is `$VAULT_ADDRESS` (stop otherwise) and show `status`, sell/buy tokens and amounts,
+`validTo`. If `status` is `fulfilled`, `expired` or `cancelled`, stop: nothing to cancel.
 
-### 3. Show preview and ask for confirmation
+### 3. Confirm
 
-```
-Cancel CoW Swap limit order
-Vault            : $VAULT_ADDRESS
-Order ID         : <order_id>
-Intent protocol  : $INTENT_PROTOCOL
-CoW Explorer     : https://explorer.cow.fi/sepolia/orders/<order_id>
-```
+Ask: "Cancel order <order_uid>? (yes/no)"
 
-Ask: "Cancel this order? (yes/no)" — if no, stop.
-
-### 4. Call cancelLimitOrder on the vault
+### 4. Cancel on-chain
 
 ```bash
-cast send $VAULT_ADDRESS \
-  "cancelLimitOrder(address,bytes)" \
-  "$INTENT_PROTOCOL" \
-  "$CANCEL_DATA" \
-  --rpc-url "<rpc_url>" \
-  --private-key "$PRIVATE_KEY"
+cast send $VAULT_ADDRESS "cancelIntentOrder(address,bytes)" \
+  $INTENT_PROTOCOL <order_uid> \
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 ```
-
-If the transaction reverts, print the revert reason and stop.
 
 ### 5. Show result
 
 ```
 Order cancelled!
-  Tx hash      : <tx_hash>
-  Etherscan    : https://sepolia.etherscan.io/tx/<tx_hash>
-  Order ID     : <order_id>
-
-The order has been cancelled. Any unfilled sell tokens remain in the vault.
+  Tx       : https://sepolia.etherscan.io/tx/<tx_hash>
+  Order    : https://explorer.cow.fi/sepolia/orders/<order_uid>
 ```

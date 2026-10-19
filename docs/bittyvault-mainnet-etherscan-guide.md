@@ -42,11 +42,9 @@ Asset decimals:
 | USDT | 6 |
 | USDS | 18 |
 
-Role hash:
-
-| Role | Hash |
-| --- | --- |
-| ASSET_MANAGER_ROLE | `0x7613a25ecc738585a232ad50a301178f12b3ba8d3c8deb6a0dfa0418b2964fce` |
+There is no asset manager role hash to look up. A vault holds one asset manager as a single stored
+address, set by the owner with `setAssetManager(address,uint64)`; `ASSET_MANAGER_ROLE()` reverts on a
+current vault.
 
 ## 3. Wallets and Roles
 
@@ -55,10 +53,15 @@ Use separate wallets for separate duties.
 | Wallet | Purpose |
 | --- | --- |
 | Owner wallet | Holds `DEFAULT_ADMIN_ROLE`. Use for name changes, asset/protocol allowlist changes, receiver setup, and granting/revoking asset managers. Prefer a hardware wallet or multisig. |
-| Asset manager wallet | Holds `ASSET_MANAGER_ROLE`. Use for trading, lending, staking, liquidity, and operational transactions. Keep enough ETH for gas. |
+| Asset manager wallet | The single address named by `setAssetManager`. Use for trading, lending, staking, liquidity, and operational transactions. Keep enough ETH for gas. |
 | Public caller | Some actions, such as `payReceiver`, may be callable by anyone unless receiver configuration restricts the trigger address. |
 
-Do not grant `ASSET_MANAGER_ROLE` to the same address as the owner if the vault contract rejects owner and asset manager equality.
+The owner may name themselves as the asset manager — one key then does everything. Naming a separate
+address is what lets a hot key trade without also being able to move money out.
+
+Installing a manager waits out the vault's change timelock: the new address shows up as
+`pendingManager` in `getAssetManagerSettings()` until `pendingAt`. Revoking with
+`setAssetManager(0x0, 0)` takes effect immediately, as does shortening an existing expiry.
 
 ## 4. Create a Vault on Etherscan
 
@@ -96,7 +99,7 @@ On the vault contract page, use `Read Contract`:
 | `getLendingProtocols()` | Aave V3 protocol address. |
 | `getStakingProtocols()` | Lido V2 protocol address. |
 | `getAMMProtocols()` | Uniswap V3 protocol address. |
-| `hasRole(ASSET_MANAGER_ROLE, asset_manager)` | `true` for the chosen asset manager. |
+| `getAssetManagerSettings()` | `(manager, expiresAt, pendingManager, pendingAt)` — the chosen asset manager, and any install still waiting out the timelock. |
 
 For wallet balances, open each token contract, use `Read Contract`, and call `balanceOf(vault_address)`. Convert raw units by token decimals.
 

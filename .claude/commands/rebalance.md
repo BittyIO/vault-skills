@@ -1,152 +1,105 @@
-Swap one asset for another inside a BittyVault via UniswapV3 on Sepolia.
+Swap one asset for another inside a BittyVault at market, via the Uniswap Universal Router on Sepolia.
 
-**Usage:** `/rebalance <from_asset> <to_asset> <sell_amount> <buy_amount_min> [fee_tier]`
+**Usage:** `/rebalance <from_asset> <to_asset> <sell_amount> [slippage_bps]`
 
-- `<from_asset>` — token to sell: symbol (WETH, WBTC, USDT, USDC) or raw `0x…`
+- `<from_asset>` — token to sell: symbol (WETH, USDT, USDC) or raw `0x…`
 - `<to_asset>` — token to buy: symbol or raw `0x…`
-- `<sell_amount>` — human-readable amount to sell (e.g. `1.5`)
-- `<buy_amount_min>` — minimum human-readable amount to receive (slippage protection)
-- `[fee_tier]` — optional UniswapV3 pool fee in bps: `100`, `500`, `3000` (default), or `10000`
+- `<sell_amount>` — human-readable amount to sell (e.g. `0.01`)
+- `[slippage_bps]` — tolerated slippage below the quote, in basis points (default `100` = 1%)
 
 Arguments: $ARGUMENTS
 
-Parse `$ARGUMENTS` as: from_asset, to_asset, sell_amount, buy_amount_min, optional fee_tier.
-If the first 4 are missing, stop and print usage.
+Parse `$ARGUMENTS` as: from_asset, to_asset, sell_amount, optional slippage_bps.
+If the first 3 are missing, stop and print usage.
 
 ---
 
-## Hardcoded Sepolia configuration
+## Sepolia tokens
 
-| Symbol | Address | Decimals |
-|--------|---------|----------|
-| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
-| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
-| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
-| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
+| Symbol | Address | Decimals | Market-tradeable |
+|--------|---------|----------|------------------|
+| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 | yes |
+| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 | yes |
+| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 | yes |
+| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 | no — use `/limit-sell` |
+
+A market trade needs both tokens to carry the guard's AMM-liquid flag (`assetCategory & 4`); otherwise
+the vault reverts with `MarketTradeNotSupported`.
+
+The route is quoted by Bitty's public routing API, which searches Uniswap v2/v3/v4 pools and returns a
+route encoded for the vault's trade adapter (on Sepolia only v4 pools are executable). The adapter
+takes a 0.2% fee — from the input when selling a stablecoin, otherwise from the output — and the
+quote's `minReceive` already accounts for it.
 
 ---
 
 ## Steps
 
-### 1. Check environment variables
+### 1. Check environment and resolve the market-trade protocol
 
 ```bash
-echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — set it in .env to a vault where your key holds a seat}"
+: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
+: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
+for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
+  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 3 ] && MARKET_PROTOCOL=$p
+done
 ```
 
-Then resolve the AMM protocol registered on the vault:
+### 2. Resolve tokens and amount, check balance
+
+Resolve both tokens (table above, or `decimals()(uint8)` for raw addresses). Convert `<sell_amount>` to
+`<sell_raw>`. Check `balanceOf(vault)` of the from-token; stop if short.
+
+### 3. Get a route
 
 ```bash
-AMM_PROTOCOL=$(cast call $VAULT_ADDRESS "getAMMProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+QUOTE=$(curl -s "https://bitty.io/api/ethereum/trade/route?network=sepolia&version=v2&tokenIn=<from_address>&tokenOut=<to_address>&amountIn=<sell_raw>&slippageBps=<slippage_bps>")
+echo "$QUOTE" | python3 -c 'import json,sys; q=json.load(sys.stdin); print({k:v for k,v in q.items() if k!="route"})'
+ROUTE=$(echo "$QUOTE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["route"] or "")')
+MIN_RECEIVE=$(echo "$QUOTE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["minReceive"])')
 ```
 
-If `$AMM_PROTOCOL` is empty, stop: `Error: no Uniswap AMM protocol registered on this vault.`
+If `route` is null, stop: "No Uniswap route for <from> → <to> on Sepolia." The route expires at
+`deadline` (30 minutes) — re-quote if the user takes longer to confirm.
 
-### 2. Resolve asset addresses and decimals
+### 4. Preview and confirm
 
-Resolve both `<from_asset>` and `<to_asset>` using the table above or by fetching decimals if raw addresses are given:
-
-```bash
-cast call <asset_address> "decimals()(uint8)" \
-  --rpc-url "<rpc_url>"
 ```
-
-### 3. Convert amounts to raw units
-
-- 18 decimals: `cast to-unit <amount>ether wei`
-- Other decimals: `<amount> * 10^<decimals>` as integer
-
-Save as `<sell_amount_raw>` and `<buy_amount_min_raw>`.
-
-### 4. Check vault's from-token balance
-
-```bash
-cast call <from_asset_address> \
-  "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "<rpc_url>"
-```
-
-If balance < `<sell_amount_raw>`, stop with:
-```
-Error: Vault balance insufficient for <from_asset_symbol>.
-  Vault balance : <balance> (raw)
-  Requested     : <sell_amount_raw> (raw)
-```
-
-### 5. Build the UniswapV3 swap path and encode calldata
-
-Default fee tier to `3000` if not provided.
-
-**Build the path** (packed encoding: tokenIn ++ fee_3bytes ++ tokenOut):
-```bash
-FROM_NO_0X="${FROM_ASSET_ADDRESS#0x}"
-TO_NO_0X="${TO_ASSET_ADDRESS#0x}"
-FEE_HEX=$(printf "%06x" <fee_tier>)
-PATH_HEX="0x${FROM_NO_0X}${FEE_HEX}${TO_NO_0X}"
-```
-
-**ABI-encode the data** for the UniswapV3 protocol (tokenIn, amountIn, tokenOut, amountOutMin, path):
-```bash
-DATA=$(cast abi-encode \
-  "f(address,uint256,address,uint256,bytes)" \
-  "<from_asset_address>" \
-  "<sell_amount_raw>" \
-  "<to_asset_address>" \
-  "<buy_amount_min_raw>" \
-  "$PATH_HEX")
-```
-
-### 6. Show preview and ask for confirmation
-
-Print:
-```
-Vault         : $VAULT_ADDRESS
-Sell          : <sell_amount> <from_asset_symbol> (<sell_amount_raw> raw)
-Buy (min)     : <buy_amount_min> <to_asset_symbol> (<buy_amount_min_raw> raw)
-Pool fee      : <fee_tier> (<fee_tier/10000>%)
-AMM protocol  : $AMM_PROTOCOL
-Swap path     : <from_asset_symbol> --[<fee_tier>]--> <to_asset_symbol>
+Vault        : $VAULT_ADDRESS
+Sell         : <sell_amount> <from> (<sell_raw> raw)
+Expected     : <receive> <to> (raw, after the 0.2% fee)
+Minimum      : <minReceive> <to> (raw)
+Route        : <hops joined with " → ">
 ```
 
 Ask: "Proceed with swap? (yes/no)"
-If no, stop.
 
-### 7. Call marketSell on the vault
+### 5. marketSell
 
 ```bash
 cast send $VAULT_ADDRESS \
-  "marketSell(address,address,address,uint256,uint256,bytes)" \
-  "$AMM_PROTOCOL" \
-  "<from_asset_address>" \
-  "<to_asset_address>" \
-  "<sell_amount_raw>" \
-  "<buy_amount_min_raw>" \
-  "$DATA" \
-  --rpc-url "<rpc_url>" \
-  --private-key "$PRIVATE_KEY"
+  "marketSell(address,address,uint256,address,uint256,bytes)" \
+  $MARKET_PROTOCOL <from_address> <sell_raw> <to_address> $MIN_RECEIVE "$ROUTE" \
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 ```
 
-If the transaction reverts, print the revert reason and stop.
+On revert:
+- `InsufficientOutput` — price moved past the slippage; re-quote.
+- `MarketTradePriceTooLow` / `MarketTradeExceedsDailyLossAllowance` — market-trade protection is on
+  (new vaults start with a $10,000/day `marketTradeDailyLossAllowance`): every trade must come out
+  within 5% of Chainlink value, and what it comes out short is charged to the day's budget. Sepolia
+  test pools are badly mispriced, so the direction the pool underprices reverts; the other direction
+  passes. `PriceStale` means the token's Chainlink feed has not updated recently.
+- `OwnableUnauthorizedAccount` — this key lacks `PERM_MARKET_TRADE` or its grant has expired.
 
-### 8. Show result
+### 6. Show result
 
-Check vault balances for both tokens after the tx:
-
-```bash
-cast call <from_asset_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "<rpc_url>"
-
-cast call <to_asset_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "<rpc_url>"
-```
-
-Print:
+Re-read both token balances of the vault and print:
 ```
 Swap successful!
-  Tx hash              : <tx_hash>
-  Etherscan            : https://sepolia.etherscan.io/tx/<tx_hash>
-  Sold                 : <sell_amount> <from_asset_symbol>
-  Vault <from> balance : <from_balance_after> (raw)
-  Vault <to> balance   : <to_balance_after> (raw)
+  Tx         : https://sepolia.etherscan.io/tx/<tx_hash>
+  Sold       : <sell_amount> <from>
+  <from> bal : <after> (raw)
+  <to> bal   : <before> → <after> (raw)
 ```

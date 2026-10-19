@@ -1,67 +1,62 @@
-Cancel an active CoW Swap TWAP order on a BittyVault on Sepolia. Returns any unfilled sell token allowance to the vault.
+Cancel a gasless CoW TWAP of a BittyVault on Sepolia — the current part and every part still to come.
 
-**Usage:** `/cancel-twap <twap_id>`
+**Usage:** `/cancel-twap <schedule_file>`
 
-- `<twap_id>` — the bytes32 TWAP ID returned by `/twap-sell` or `/twap-buy`
+- `<schedule_file>` — the `.twaps/<vault>-<start>.env` file printed by `/twap-sell` or `/twap-buy`
 
 Arguments: $ARGUMENTS
 
-Parse `$ARGUMENTS` as: first token is `<twap_id>`. If missing, stop and print usage.
+If missing, list the files in `.twaps/` and stop with usage.
 
 ---
 
-## Hardcoded Sepolia configuration
-
-CoW Swap intent protocol: resolved from the vault on-chain (see step 2).
+The schedule signature authorises every part, and each posted part carries it publicly, so deleting
+the file is **not** a cancel — anyone could still post a future part. Part UIDs are deterministic, so
+the skill computes the UID of every part whose window has not closed and invalidates them all on the
+CoW settlement contract with the vault's `cancelIntentOrders`, in one transaction. Funds never left the
+vault, so there is nothing to return.
 
 ---
 
 ## Steps
 
-### 1. Check environment variables
+### 1. Check environment and resolve the intent protocol
 
 ```bash
-echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set}"
+: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
+source <schedule_file>
+GUARD=$(cast call $VAULT "guard()(address)" --rpc-url "<rpc_url>")
+for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
+  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 4 ] && INTENT_PROTOCOL=$p
+done
 ```
 
-### 2. Resolve intent protocol, show preview and ask for confirmation
+### 2. Compute the live part UIDs
 
 ```bash
-INTENT_PROTOCOL=$(cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
+UIDS=$(RPC_URL="<rpc_url>" ./scripts/cow.sh twap-uids <schedule_file>)
 ```
 
-If `$INTENT_PROTOCOL` is empty, stop: "Error: no CoW Swap protocol registered on this vault. Ask the vault owner to add it via the web app (Manage → Protocols)."
+If `UIDS` is `[]`, every part has expired: tell the user there is nothing to cancel and stop.
 
-```
-Cancel CoW Swap TWAP order
-Vault            : $VAULT_ADDRESS
-TWAP ID          : <twap_id>
-Intent protocol  : $INTENT_PROTOCOL
-```
+### 3. Confirm
 
-Ask: "Cancel this TWAP? (yes/no)" — if no, stop.
+Print the schedule (sell/buy tokens, per-part amounts, interval, parts) and how many UIDs will be
+invalidated. Ask: "Cancel this TWAP? (yes/no)"
 
-### 3. Call cancelTwapOrder on the vault
+### 4. Cancel on-chain
 
 ```bash
-cast send $VAULT_ADDRESS \
-  "cancelTwapOrder(address,bytes32)" \
-  "$INTENT_PROTOCOL" \
-  "<twap_id>" \
-  --rpc-url "<rpc_url>" \
-  --private-key "$PRIVATE_KEY"
+cast send $VAULT "cancelIntentOrders(address,bytes[])" \
+  $INTENT_PROTOCOL "$UIDS" \
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 ```
 
-If the transaction reverts, print the revert reason and stop.
+### 5. Show result
 
-### 4. Show result
-
+Rename the file to `<schedule_file>.cancelled` so `/post-twap-part` is not run on it again, and print:
 ```
 TWAP cancelled!
-  Tx hash      : <tx_hash>
-  Etherscan    : https://sepolia.etherscan.io/tx/<tx_hash>
-  TWAP ID      : <twap_id>
-
-Any remaining sell token allowance has been revoked. Future slots will not execute.
+  Tx           : https://sepolia.etherscan.io/tx/<tx_hash>
+  Invalidated  : <count> part order(s)
 ```

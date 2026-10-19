@@ -1,4 +1,4 @@
-Show all assets and their balances in the vault — wallet balance, supplied to Aave, and staked in Lido.
+Show the vault's assets — wallet balance, supplied to Aave, staked in Lido — plus its asset manager and risk settings.
 
 **Usage:** `/vault-balances`
 
@@ -6,112 +6,76 @@ No arguments needed. Reads `$VAULT_ADDRESS` from env.
 
 ---
 
+## Sepolia tokens
+
+| Symbol | Address | Decimals |
+|--------|---------|----------|
+| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
+| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
+| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
+| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
+| stETH | `0x3e3FE7dBc6B4C189E7128855dD526361c49b40Af` | 18 |
+
+---
+
 ## Steps
 
-### 1. Check environment variables and resolve protocols
-
-The lending (Aave) and staking (Lido) protocols are read from the vault on-chain, so this works for a vault created by any factory version. The Lido protocol is the staking protocol that responds to `stETH()`.
+### 1. Check environment and resolve protocols
 
 ```bash
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — set it in .env to a vault where your key holds a seat}"
-
-LENDING_PROTOCOL=$(cast call $VAULT_ADDRESS "getLendingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[] ' | cut -d, -f1)
-
-STAKING_PROTOCOL=""
-for p in $(cast call $VAULT_ADDRESS "getStakingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[]' | tr ',' ' '); do
-  if cast call "$p" "stETH()(address)" --rpc-url "<rpc_url>" >/dev/null 2>&1; then STAKING_PROTOCOL="$p"; break; fi
+: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
+for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
+  case "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" in
+    1) STAKING_PROTOCOL=$p ;; 2) LENDING_PROTOCOL=$p ;;
+  esac
 done
 ```
 
-If `$LENDING_PROTOCOL` is empty, show the Supplied column as 0. If `$STAKING_PROTOCOL` is empty, show the Staked column as 0 and skip the pending-unstake section.
+### 2. Wallet balances
 
-### 2. Fetch the asset and stablecoin lists from the vault
+For each token in the table:
+```bash
+cast call <token> "balanceOf(address)(uint256)" $VAULT_ADDRESS --rpc-url "<rpc_url>"
+```
+Also the vault's raw ETH: `cast balance $VAULT_ADDRESS --rpc-url "<rpc_url>"` (normally 0 — incoming ETH
+is wrapped; anyone can call `wrapNative()` to wrap a leftover).
+
+### 3. Protocol positions
 
 ```bash
-cast call $VAULT_ADDRESS "getAssets()(address[])" \
+cast call $VAULT_ADDRESS "getBalances(address[],address[])(uint256[])" \
+  "[$LENDING_PROTOCOL,$LENDING_PROTOCOL,$LENDING_PROTOCOL,$LENDING_PROTOCOL,$STAKING_PROTOCOL]" \
+  "[0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9,0x29f2D40B0605204364af54EC677bD022dA425d03,0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0,0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238,0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9]" \
   --rpc-url "<rpc_url>"
-
-cast call $VAULT_ADDRESS "getStableCoins()(address[])" \
-  --rpc-url "<rpc_url>"
+cast call $VAULT_ADDRESS "getPendingWithdrawalIds(address)(uint256[])" $STAKING_PROTOCOL --rpc-url "<rpc_url>"
 ```
 
-Combine both lists into a single list of token addresses to inspect. Label each as `asset` or `stablecoin`.
+If the batched call reverts (an asset the adapter does not know), query each pair on its own and show
+the ones that answer.
 
-### 3. For each token, fetch all three balance types
-
-For every token address in the combined list, run the following in parallel:
-
-**Vault wallet balance:**
-```bash
-cast call <token_address> \
-  "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "<rpc_url>"
-```
-
-**Supplied balance (Aave):**
-```bash
-cast call $VAULT_ADDRESS \
-  "getSuppliedBalance(address,address)(uint256)" \
-  "$LENDING_PROTOCOL" \
-  "<token_address>" \
-  --rpc-url "<rpc_url>"
-```
-
-**Staked balance (Lido):**
-```bash
-cast call $VAULT_ADDRESS \
-  "getStakedBalance(address,address)(uint256)" \
-  "$STAKING_PROTOCOL" \
-  "<token_address>" \
-  --rpc-url "<rpc_url>"
-```
-
-**Token decimals and symbol** (to display human-readable amounts):
-```bash
-cast call <token_address> "decimals()(uint8)" \
-  --rpc-url "<rpc_url>"
-
-cast call <token_address> "symbol()(string)" \
-  --rpc-url "<rpc_url>"
-```
-
-Convert each raw balance to human-readable by dividing by `10^decimals`. Show at least 4 significant decimal places.
-
-### 4. Display the results
-
-Print a summary header:
-```
-Vault: $VAULT_ADDRESS
-Network: Sepolia
-```
-
-Then print a table with one row per token:
-
-```
-Symbol   Type        Wallet          Supplied (Aave)  Staked (Lido)   Total
--------- ----------- --------------- ---------------- --------------- ---------------
-WETH     asset       1.2340          0.5000           0.0000          1.7340
-WBTC     asset       0.0100          0.0000           0.0000          0.0100
-USDC     stablecoin  500.0000        0.0000           0.0000          500.0000
-USDT     stablecoin  0.0000          250.0000         0.0000          250.0000
-...
-```
-
-- `Total` = Wallet + Supplied + Staked
-- Skip a token row entirely if all three balances are 0
-- If the asset list is empty, print: "No assets registered in this vault."
-
-Finally print a pending unstake section if there are any:
+### 4. Vault state
 
 ```bash
-cast call $VAULT_ADDRESS \
-  "getUnstakeRequestIds(address)(uint256[])" \
-  "$STAKING_PROTOCOL" \
-  --rpc-url "<rpc_url>"
+cast call $VAULT_ADDRESS "owner()(address)" --rpc-url "<rpc_url>"
+cast call $VAULT_ADDRESS "getAssetManagerSettings()(address,uint64,address,uint64,uint32,uint32)" --rpc-url "<rpc_url>"
+cast call $VAULT_ADDRESS "riskSettings()(uint64,uint64,uint64)" --rpc-url "<rpc_url>"
+cast call $VAULT_ADDRESS "lockLevel()(uint8)" --rpc-url "<rpc_url>"
 ```
 
-If the result is non-empty, print:
+### 5. Print
+
+Format amounts with each token's decimals and skip zero rows:
 ```
-Pending unstake request IDs: <ids>
-Run /claim-unstaked to collect once finalized.
+Vault <VAULT_ADDRESS> (Sepolia)  — https://sepolia.etherscan.io/address/<VAULT_ADDRESS>
+
+Asset   Wallet        Aave         Lido (stETH)
+WETH    0.0100        —            0.0050
+USDT    12.50         5.00         —
+
+Pending Lido requests : <ids or none>
+Owner                 : <owner>
+Asset manager         : <manager>, expires <date>, permissions <mask> (<names>)  [pending: <manager> at <date>]
+Risk                  : timelock <s>s · send allowance <usd or none>/day · market-trade loss allowance <usd or off>/day
+Lock                  : unlocked | emergency locked | locked forever
 ```

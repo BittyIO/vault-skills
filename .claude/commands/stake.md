@@ -1,9 +1,9 @@
-Stake an asset from a BittyVault into the Lido staking protocol on Sepolia.
+Stake WETH from a BittyVault into the Lido staking protocol on Sepolia (the vault receives stETH).
 
 **Usage:** `/stake <asset> <amount>`
 
-- `<asset>` — token symbol (WETH, WBTC, USDT, USDC) or a raw `0x…` address
-- `<amount>` — human-readable amount (e.g. `1.5` for 1.5 WETH), or `max` to stake the full vault balance
+- `<asset>` — `WETH` (`0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9`); Lido takes nothing else
+- `<amount>` — human-readable amount (e.g. `0.5`), or `max` for the vault's full WETH balance
 
 Arguments: $ARGUMENTS
 
@@ -12,149 +12,60 @@ If any are missing, stop and print: "Usage: /stake <asset> <amount>"
 
 ---
 
-## Hardcoded Sepolia configuration
-
-| Symbol | Address | Decimals |
-|--------|---------|----------|
-| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
-| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
-| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
-| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
-
----
-
 ## Steps
 
-### 1. Check environment variables
+### 1. Check environment and resolve the staking protocol
 
 ```bash
-echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — set it in .env to a vault where your key holds a seat}"
-```
-
-### Resolve the Lido staking protocol
-
-A vault may have multiple staking protocols registered (e.g. Lido and Sky). Read them from the vault on-chain and pick the Lido one — identified because only the Lido protocol responds to `stETH()`:
-
-```bash
-STAKING_PROTOCOL=""
-for p in $(cast call $VAULT_ADDRESS "getStakingProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[]' | tr ',' ' '); do
-  if cast call "$p" "stETH()(address)" --rpc-url "<rpc_url>" >/dev/null 2>&1; then STAKING_PROTOCOL="$p"; break; fi
+: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
+: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+WETH=0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9
+GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
+for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
+  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 1 ] && STAKING_PROTOCOL=$p
 done
+cast call $VAULT_ADDRESS "isProtocolAllowed(address)(bool)" $STAKING_PROTOCOL --rpc-url "<rpc_url>"
 ```
 
-If `$STAKING_PROTOCOL` is empty, stop and print:
-```
-Error: no Lido staking protocol registered on this vault.
-```
+If `<asset>` is not WETH, stop: "Lido only stakes WETH."
 
-### 2. Resolve asset address and decimals
-
-If `<asset>` matches a known symbol (case-insensitive), use the table above.
-If `<asset>` starts with `0x`, use it directly — then fetch its decimals:
+### 2. Resolve the amount
 
 ```bash
-cast call <asset_address> "decimals()(uint8)" \
-  --rpc-url "<rpc_url>"
+cast call $WETH "balanceOf(address)(uint256)" $VAULT_ADDRESS --rpc-url "<rpc_url>"
 ```
 
-### 3. Check vault's token balance
+`max` → the full balance; otherwise `cast to-unit <amount>ether wei`. Stop if the balance is short.
+
+### 3. Read the current stake
 
 ```bash
-cast call <asset_address> \
-  "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "<rpc_url>"
+cast call $VAULT_ADDRESS "getBalances(address[],address[])(uint256[])" \
+  "[$STAKING_PROTOCOL]" "[$WETH]" --rpc-url "<rpc_url>"
 ```
 
-Save as `<vault_balance>`.
+Save as `<staked_before>` (stETH, 18 decimals).
 
-If `<vault_balance>` is 0, stop and print:
-```
-Error: Vault has no <asset_symbol> balance to stake.
-Deposit funds into the vault first.
-```
+### 4. Preview and confirm
 
-### 4. Resolve amount to raw units
+Print vault, amount and `<staked_before>`. Ask: "Proceed with stake? (yes/no)"
 
-- If `<amount>` is `max`, set `<amount_raw>` = `<vault_balance>`.
-- If 18 decimals: `cast to-unit <amount>ether wei`
-- Other decimals: compute `<amount> * 10^<decimals>` as an integer
-
-If `<amount_raw>` > `<vault_balance>`, stop and print:
-```
-Error: Stake amount exceeds vault balance.
-  Vault balance : <vault_balance> (raw)
-  Requested     : <amount_raw> (raw)
-```
-
-### 5. Check current staked balance (before)
+### 5. Deposit
 
 ```bash
-cast call $VAULT_ADDRESS \
-  "getStakedBalance(address,address)(uint256)" \
-  "$STAKING_PROTOCOL" \
-  "<asset_address>" \
-  --rpc-url "<rpc_url>"
+cast send $VAULT_ADDRESS "deposit(address,address,uint256)" \
+  $STAKING_PROTOCOL $WETH <amount_raw> \
+  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
 ```
 
-Save as `<staked_before>`.
+`OwnableUnauthorizedAccount` means this key lacks `PERM_YIELD` or its grant has expired.
 
-### 6. Show preview and ask for confirmation
+### 6. Show result
 
-Print:
-```
-Vault            : $VAULT_ADDRESS
-Asset            : <asset_symbol> (<asset_address>)
-Amount           : <amount> <asset_symbol> (<amount_raw> raw)
-Staking protocol : $STAKING_PROTOCOL
-Vault balance    : <vault_balance> (raw)
-Currently staked : <staked_before> (raw)
-```
-
-Ask: "Proceed with staking? (yes/no)"
-If no, stop.
-
-### 7. Call stake on the vault
-
-```bash
-cast send $VAULT_ADDRESS \
-  "stake(address,address,uint256)" \
-  "$STAKING_PROTOCOL" \
-  "<asset_address>" \
-  "<amount_raw>" \
-  --rpc-url "<rpc_url>" \
-  --private-key "$PRIVATE_KEY"
-```
-
-If the transaction reverts, print the revert reason and stop.
-
-### 8. Verify and show result
-
-Fetch the new staked balance after the tx:
-
-```bash
-cast call $VAULT_ADDRESS \
-  "getStakedBalance(address,address)(uint256)" \
-  "$STAKING_PROTOCOL" \
-  "<asset_address>" \
-  --rpc-url "<rpc_url>"
-```
-
-Also check remaining vault balance:
-
-```bash
-cast call <asset_address> \
-  "balanceOf(address)(uint256)" $VAULT_ADDRESS \
-  --rpc-url "<rpc_url>"
-```
-
-Print a final summary:
+Re-run step 3 and print:
 ```
 Stake successful!
-  Tx hash          : <tx_hash>
-  Etherscan        : https://sepolia.etherscan.io/tx/<tx_hash>
-  Asset staked     : <amount> <asset_symbol>
-  Staked before    : <staked_before> (raw)
-  Staked after     : <staked_after> (raw)
-  Vault balance    : <vault_balance_after> (raw)
+  Tx       : https://sepolia.etherscan.io/tx/<tx_hash>
+  Staked   : <amount> WETH
+  stETH    : <staked_before> → <staked_after> (wei)
 ```

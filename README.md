@@ -1,20 +1,18 @@
 # BittyVault Claude Code Skills
 
-Claude Code slash commands for the **delegated roles** of a [BittyVault](https://github.com/bittyIO/vault) — the **asset manager** (swap, lend, stake, manage liquidity), the **payout operator** (propose payments), and the **sub owner** (operate a sub-vault funded by the owner) — all from the Claude Code CLI.
-
-Everything owner-side — activating the vault, granting these roles, approving proposals, risk settings, giving up ownership — lives in the Bitty web app, where the owner signs with their own wallet. Vault ownership is **non-transferable** (one address, one vault, renounce-to-zero only), so there are no ownership skills here by design: the owner key never touches this CLI.
+Claude Code slash commands for managing a [BittyVault](https://github.com/bittyIO/vault) DeFi vault on Ethereum — activate, fund, swap, lend, stake, and place gasless CoW orders, all from the Claude Code CLI.
 
 ## Prerequisites
 
 - [Claude Code](https://claude.ai/code) installed
 - [Foundry](https://getfoundry.sh) (`cast` in your PATH)
-- An Alchemy API key for RPC access (optional — falls back to a public endpoint)
+- An Alchemy API key for Sepolia RPC access
 - A `.env` file in your working directory:
 
 ```bash
 ALCHEMY_KEY=your_alchemy_key_here
-PRIVATE_KEY=            # the asset manager's or payout operator's hot-wallet key
-VAULT_ADDRESS=          # the vault you hold a seat in (the owner grants seats in the web app)
+PRIVATE_KEY=            # filled in by /new-assetmanager
+VAULT_ADDRESS=          # filled in by /deploy-vault
 ```
 
 ## Install
@@ -28,93 +26,90 @@ claude
 
 > Skills live in `.claude/commands/` and are picked up by Claude Code automatically when you open it in this directory.
 
+## Quick start
+
+Run the full end-to-end demo in one command:
+
+```
+/quickstart <owner_address>
+```
+
+It walks through 9 steps interactively: create an AI asset manager key, have the owner activate the
+vault (with the manager installed in the same transaction), fund it, swap at market, supply to Aave,
+stake in Lido, and place and cancel a gasless CoW limit order. Because a new vault's asset manager
+takes effect a day after activation, the demo pauses after funding; re-run it the next day to finish.
+
 ## Skills reference
 
-### Shared
+### Setup
 
 | Skill | Usage | Description |
 |-------|-------|-------------|
-| `/vault-balances` | `/vault-balances` | Show all asset balances held in the vault |
+| `/quickstart` | `/quickstart <owner> [amount]` | End-to-end demo — runs all steps in sequence |
+| `/new-assetmanager` | `/new-assetmanager [vault]` | Create/import the AI asset manager key; owner installs it |
+| `/deploy-vault` | `/deploy-vault <owner>` | Prepare the owner's `activateVault` tx (enables CoW, installs the manager) |
+| `/fund-vault` | `/fund-vault [eth_amount]` | Send ETH to the vault — it wraps to WETH on arrival |
+| `/vault-balances` | `/vault-balances` | Wallet, Aave and Lido balances plus manager, risk and lock state |
 
 ### Asset manager skills
 
-Requires `PRIVATE_KEY` in `.env` (the asset manager's hot wallet key, set by the owner via `setAssetManager` / `setFullAssetManager` in the web app).
+Requires `PRIVATE_KEY` in `.env` (the asset manager's hot wallet key). What the key may do is set by
+the owner's grant: an expiry (at most 1 year) and a permission mask — `1` stake, `2` supply,
+`4` market trade, `8` CoW orders. Withdrawing, claiming and cancelling need no permission. A manager
+can never send funds out of the vault.
 
 | Skill | Usage | Description |
 |-------|-------|-------------|
-| `/rebalance` | `/rebalance <from> <to> <sell> <buy_min> [fee]` | Swap between assets via Uniswap V3 |
-| `/supply` | `/supply <asset> <amount>` | Supply an asset to Aave lending |
-| `/withdraw` | `/withdraw <asset> <amount\|max>` | Withdraw a supplied asset from Aave |
-| `/stake` | `/stake <asset> <amount\|max>` | Stake WETH in Lido |
-| `/unstake` | `/unstake <asset> <amount\|max>` | Request unstake from Lido |
-| `/claim-unstaked` | `/claim-unstaked [id ...]` | Claim finalized Lido withdrawal requests |
-| `/add-liquidity` | `/add-liquidity mint\|increase ...` | Add liquidity to a Uniswap V3 position |
-| `/remove-liquidity` | `/remove-liquidity <tokenId> <pct> <deadline>` | Remove liquidity from a Uniswap V3 position |
-| `/claim-fees` | `/claim-fees <tokenId>` | Collect accumulated Uniswap V3 fees |
+| `/rebalance` | `/rebalance <from> <to> <sell> [slippage_bps]` | Market swap via the Uniswap Universal Router |
+| `/supply` | `/supply <asset> <amount\|max>` | Deposit into Aave lending |
+| `/withdraw` | `/withdraw <asset> <amount\|max>` | Withdraw from Aave |
+| `/stake` | `/stake WETH <amount\|max>` | Deposit WETH into Lido (receives stETH) |
+| `/unstake` | `/unstake WETH <amount\|max>` | Open a Lido withdrawal request |
+| `/claim-unstaked` | `/claim-unstaked [id ...]` | Claim finalized Lido withdrawals |
+| `/limit-sell` | `/limit-sell <from> <to> <sell> <buy_min> [ttl]` | Gasless CoW limit sell (signed off-chain) |
+| `/limit-buy` | `/limit-buy <from> <to> <buy> <sell_max> [ttl]` | Gasless CoW limit buy |
+| `/cancel-order` | `/cancel-order <uid>` | Invalidate a CoW order on-chain |
+| `/twap-sell` | `/twap-sell <from> <to> <total> <min_per_part> <n> <interval>` | Gasless TWAP, one signature for every part |
+| `/twap-buy` | `/twap-buy <from> <to> <total_buy> <sell_per_part> <n> <interval>` | Gasless DCA |
+| `/post-twap-part` | `/post-twap-part <schedule_file>` | Post the current TWAP part (run each interval) |
+| `/cancel-twap` | `/cancel-twap <schedule_file>` | Invalidate every remaining TWAP part on-chain |
 
-### Payout operator skills
-
-Requires `PRIVATE_KEY` in `.env` (a payout operator's key, granted a seat by the owner via `setPayoutOperator` in the web app). Proposals never move funds by themselves — the owner approves them in the web app.
-
-| Skill | Usage | Description |
-|-------|-------|-------------|
-| `/propose-payment` | `/propose-payment <recipient> <asset> <amount> <every_days> [count]` | Propose a scheduled payment (pending owner approval) |
-| `/propose-send` | `/propose-send <recipient> <asset> <amount>` | Propose a one-off send within the operator's rolling quota (pending owner approval) |
-| `/pay-scheduled` | `/pay-scheduled <id> [amount]` | Trigger a due scheduled payment by id (permissionless) |
-
-### Sub-vault (sub owner) skills
-
-A vault owner can grant a **sub-account** (a sub-vault) and name a **sub owner** for it in the Bitty web app. The sub owner sets `VAULT_ADDRESS` in `.env` to the **sub-vault address** (not the parent vault) and runs the same trade/earn skills against it — the shared vault facet treats the sub owner as `owner()` inside the sub-vault, so `/rebalance`, `/supply`, `/withdraw`, `/stake`, `/unstake`, `/claim-unstaked`, `/limit-buy`, `/limit-sell`, `/add-liquidity`, `/remove-liquidity`, `/claim-fees`, `/vault-balances`, etc. all work unchanged.
-
-Two operations are unique to the sub owner. Requires `PRIVATE_KEY` in `.env` (the sub owner's key) and `VAULT_ADDRESS` set to the sub-vault.
-
-| Skill | Usage | Description |
-|-------|-------|-------------|
-| `/return-to-vault` | `/return-to-vault <asset> <amount\|max> [<asset> <amount\|max> ...]` | Return assets from the sub-vault to the parent (the only way value leaves a sub-account) |
-| `/sub-gasless` | `/sub-gasless <daily_limit> <max_fee_per_op>` | Set the sub-vault's gasless daily budget and per-operation fee cap |
+CoW orders are signed and posted by `scripts/cow.sh` (needs `cast`, `curl`, `python3`), which checks
+each order against the vault's own CoW clone before posting. `RPC_URL=<rpc> PRIVATE_KEY=0x01 scripts/cow.sh selftest`
+verifies its EIP-712 encoding against `cast`'s signer.
 
 ### Vault owner management
 
-Owner operations (activation, assets, protocols, approvals, roles, risk settings, giving up ownership) are intentionally **not** CLI skills. The vault owner is typically a hardware wallet or multisig, and its key must never be exposed to the CLI. Manage these from the web app instead, signing with the connected owner wallet.
+Owner operations (assets, protocols, whitelisted recipients, sends, risk settings, locks, the asset
+manager grant) are intentionally **not** CLI skills. The vault owner is typically a hardware wallet or
+multisig, and its key must never be exposed to the CLI. Skills that need an owner action print the
+exact call for the owner to send from their own wallet; everything else is in the web app under
+**Manage**.
 
 ## Sepolia contract addresses
 
+Protocols are read from the guard on-chain at run time; the addresses below are for reference.
+
 | Contract | Address |
 |----------|---------|
-| BittyVaultFactory | `0xCe9c32Bf9720027EE0137153A3C5BC803570DCbf` |
-| BittyGuard | `0x00006Dc0000DBB00d9bd462ad2005E20007e0Dc7` |
-| TrustedForwarder | `0xfB49bE0861AC05bC690327076130342966429c03` |
+| BittyV1VaultFactory | `0x3d7Ed3cD011B423dd11BE280BF926667CAf0F120` |
+| Bitty Guard | `0x000000000F5fcD35885BfE4c700042cE7cb39554` |
 | WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
 | WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` |
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` |
 | USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` |
-| Aave adapter | `0x9C01F9b6Ed7BbD86f7a309A3414595608AB9d80d` |
-| Lido adapter | `0x9f6D7B2DeFCF45Cb837560209099083DDF59840a` |
-| Uniswap adapter | `0xc701E8d66d2762044B34303509A2606e6b05bB73` |
-| CoW adapter | `0x5A365990111B5A460526a25a8D4493dF103759DF` |
-
-## Mainnet contract addresses
-
-| Contract | Address |
-|----------|---------|
-| BittyVaultFactory | `0xCe9c32Bf9720027EE0137153A3C5BC803570DCbf` |
-| BittyGuard | `0x00006Dc0000DBB00d9bd462ad2005E20007e0Dc7` |
-| TrustedForwarder | `0xfB49bE0861AC05bC690327076130342966429c03` |
-| WETH | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
-| WBTC | `0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599` |
-| USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
-| USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` |
-| Aave adapter | `0x9296f7fFE86dA8B652988f07920b42F8779ce64b` |
-| Lido adapter | `0x35252547c41661103865d700d8fcACe07aFCe1Bd` |
-| Sky adapter | `0x0968632AD0A79220fFb2d2320De82b7C17357774` |
-| Uniswap adapter | `0xcE02C925850f8df20b5a6dE820e6773453240DbD` |
-| CoW adapter | `0x3d7589CD35400e0a1b8D6F5f8Ed3AE4171A5E195` |
+| Aave V3 Protocol | `0x9C01F9b6Ed7BbD86f7a309A3414595608AB9d80d` |
+| Lido V2 Protocol | `0x9f6D7B2DeFCF45Cb837560209099083DDF59840a` |
+| Uniswap Universal Trade Protocol | `0x67Bd4c240d513E7eb35Bf8d871cbeD314856b125` |
+| CoW Swap V1 Protocol | `0x236b4b260BD29DCA1Df29360FA09C084e37fB100` |
 
 ## Known Sepolia limitations
 
-- **USDC on Aave**: USDC reserve is frozen (error 51) — use WETH for lending demos instead
-- **Lido withdrawals**: The Lido withdrawal queue is paused on Sepolia — staking works but unstake requests will revert
-- **`buyAmountMin`**: Must be `≥ 1` (not `0`) on all rebalance calls
+- **New vaults** start with a 1-day change timelock, so an asset manager installed at activation takes effect 24 hours later. They also start with $10,000/day send and market-trade loss allowances.
+- **Aave**: only WBTC can be supplied (WETH/USDC have no reserve, USDT is over its supply cap). Mint test WBTC from Aave's faucet `0xC959483DBa39aa9E78757139af0e9a2EDEb3f42D` — see `/supply`.
+- **Lido withdrawals**: the Lido withdrawal queue is paused on Sepolia — staking works, unstake requests revert.
+- **Market trades**: only v4 pools are executable through Sepolia's Universal Router, and test pools are mispriced, so the 5% oracle band rejects one direction of most pairs. WBTC is not market-tradeable (use CoW).
+- **Mainnet**: the v1.0 vault is not deployed on mainnet yet; `mainnet/.claude/commands/` still targets the previous mainnet deployment.
 
 ## License
 

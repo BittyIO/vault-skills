@@ -1,21 +1,24 @@
-Place a CoW Swap limit buy order from a BittyVault on Sepolia. Receives exactly `buy_amount` of the buy token spending at most `sell_amount_max` of the sell token, filled by CoW solvers.
+Place a gasless CoW Swap limit buy order from a BittyVault on Sepolia: receive exactly `buy_amount`, spending at most `sell_amount_max`.
 
 **Usage:** `/limit-buy <from_asset> <to_asset> <buy_amount> <sell_amount_max> [valid_duration]`
 
 - `<from_asset>` — token to spend: symbol (WETH, WBTC, USDT, USDC) or raw `0x…`
 - `<to_asset>` — token to receive: symbol or raw `0x…`
 - `<buy_amount>` — exact amount to receive (human-readable)
-- `<sell_amount_max>` — maximum amount to spend (slippage cap)
+- `<sell_amount_max>` — maximum amount to spend
 - `[valid_duration]` — `1h`, `6h`, `24h` (default), `7d`
 
 Arguments: $ARGUMENTS
 
-Parse `$ARGUMENTS` as: from_asset, to_asset, buy_amount, sell_amount_max, optional valid_duration.
 If the first 4 are missing, stop and print usage.
 
 ---
 
-## Hardcoded Sepolia configuration
+Same mechanism as `/limit-sell` — signed off-chain by the asset manager, posted with
+`signingScheme: eip1271`, validated by the vault's CoW clone at settlement — with `kind: buy`. The
+vault must hold the full `sell_amount_max` for the order to validate.
+
+## Sepolia tokens
 
 | Symbol | Address | Decimals |
 |--------|---------|----------|
@@ -24,160 +27,56 @@ If the first 4 are missing, stop and print usage.
 | USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
 | USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
 
-CoW Swap intent protocol: resolved from the vault on-chain (see step 2).
-CoW Swap explorer (Sepolia): `https://explorer.cow.fi/sepolia/`
-
 ---
 
 ## Steps
 
-### 1. Check environment variables
+### 1. Check environment
 
 ```bash
-echo "PRIVATE_KEY=${PRIVATE_KEY:?PRIVATE_KEY is not set}" && \
-echo "VAULT_ADDRESS=${VAULT_ADDRESS:?VAULT_ADDRESS is not set — set it in .env to a vault where your key holds a seat}"
+: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
+: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
 ```
 
-### 2. Set intent protocol and verify registration
+### 2. Resolve tokens, amounts and expiry
+
+Convert `<buy_amount>` → `<buy_raw>` (to-token decimals) and `<sell_amount_max>` → `<sell_raw>`
+(from-token decimals). Check the vault's from-token `balanceOf` covers `<sell_raw>`; stop if not.
 
 ```bash
-RPC="<rpc_url>"
-INTENT_PROTOCOL=$(cast call $VAULT_ADDRESS "getIntentProtocols()(address[])" --rpc-url "$RPC" | tr -d '[] ' | cut -d, -f1)
+VALID_TO=$(( $(date +%s) + <seconds> ))   # 1h 3600 · 6h 21600 · 24h 86400 · 7d 604800
 ```
 
-If `$INTENT_PROTOCOL` is empty, stop: "Error: no CoW Swap protocol registered on this vault. Ask the vault owner to add it via the web app (Manage → Protocols)."
+### 3. Preview and confirm
 
-### 3. Get APP_DATA from intent protocol
+```
+CoW limit BUY (gasless)
+Vault       : $VAULT_ADDRESS
+Buy         : <buy_amount> <to> (<buy_raw> raw)
+Spend (max) : <sell_amount_max> <from> (<sell_raw> raw)
+Valid until : <date of VALID_TO>
+```
+
+Ask: "Sign and post this order? (yes/no)"
+
+### 4. Sign and post
 
 ```bash
-APP_DATA=$(cast call $INTENT_PROTOCOL "APP_DATA()(bytes32)" --rpc-url "$RPC")
+RPC_URL="<rpc_url>" ./scripts/cow.sh limit $VAULT_ADDRESS \
+  <from_address> <to_address> <sell_raw> <buy_raw> $VALID_TO buy
 ```
 
-### 4. Resolve asset addresses and decimals
+See `/limit-sell` step 4 for the script's error messages.
 
-Match `<from_asset>` / `<to_asset>` against the symbol table (case-insensitive). If raw `0x…`, fetch decimals:
-
-```bash
-cast call <address> "decimals()(uint8)" --rpc-url "$RPC"
-```
-
-### 5. Convert amounts to raw units
-
-- 18 decimals: `cast to-unit <amount>ether wei`
-- 6 or 8 decimals: `python3 -c "print(int(<amount> * 10**<decimals>))"`
-
-Save as `<buy_amount_raw>` and `<sell_amount_max_raw>`.
-
-### 6. Compute validTo timestamp
-
-Parse duration: `1h`→3600, `6h`→21600, `24h`→86400, `7d`→604800.
-
-```bash
-VALID_TO=$(python3 -c "import time; print(int(time.time()) + <seconds>)")
-```
-
-### 7. Check vault balance
-
-```bash
-cast call <from_asset_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS --rpc-url "$RPC"
-```
-
-If balance < `<sell_amount_max_raw>`, stop with an insufficient balance error.
-
-### 8. Show preview and ask for confirmation
+### 5. Show result
 
 ```
-CoW Swap limit buy order
-Vault            : $VAULT_ADDRESS
-Buy (exact)      : <buy_amount> <to_symbol>
-Spend (max)      : <sell_amount_max> <from_symbol>
-Valid until      : <human_readable_expiry>
-Intent protocol  : $INTENT_PROTOCOL
-```
+Limit buy posted!
+  Order UID   : <UID>
+  Explorer    : <EXPLORER>
+  Buy         : <buy_amount> <to>
+  Spend (max) : <sell_amount_max> <from>
+  Expires     : <date>
 
-Ask: "Place limit buy order? (yes/no)" — if no, stop.
-
-### 9. Simulate to get orderId, then execute on-chain
-
-```bash
-ASSET_MANAGER=$(cast wallet address --private-key "$PRIVATE_KEY")
-
-# Simulate to get the GPv2Order hash (orderId)
-ORDER_ID=$(cast call $VAULT_ADDRESS \
-  "limitBuy(address,address,address,uint256,uint256,uint32)(bytes32)" \
-  "$INTENT_PROTOCOL" "<from_asset_address>" "<to_asset_address>" \
-  "<buy_amount_raw>" "<sell_amount_max_raw>" "$VALID_TO" \
-  --from "$ASSET_MANAGER" --rpc-url "$RPC")
-
-# Execute on-chain
-TX_HASH=$(cast send $VAULT_ADDRESS \
-  "limitBuy(address,address,address,uint256,uint256,uint32)" \
-  "$INTENT_PROTOCOL" "<from_asset_address>" "<to_asset_address>" \
-  "<buy_amount_raw>" "<sell_amount_max_raw>" "$VALID_TO" \
-  --rpc-url "$RPC" --private-key "$PRIVATE_KEY" \
-  --json | python3 -c "import json,sys; print(json.load(sys.stdin)['transactionHash'])")
-```
-
-### 10. Post order to CoW API
-
-The adapter applies a partner fee (`PARTNER_FEE_BPS = 20` → 0.2%) on-chain. For a **buy** order it grosses the sell side **up** 0.2% (`_grossUpForPartnerFee`), so the CoW post must use that same grossed-up `sellAmount` — posting the raw amount is rejected with `InvalidEip1271Signature`.
-
-```bash
-POST_SELL_AMOUNT=$(python3 -c "print(<sell_amount_max_raw> * 10020 // 10000)")
-
-JSON_BODY=$(python3 -c "
-import json
-print(json.dumps({
-    'sellToken': '<from_asset_address>',
-    'buyToken': '<to_asset_address>',
-    'receiver': '$VAULT_ADDRESS',
-    'sellAmount': '$POST_SELL_AMOUNT',
-    'buyAmount': '<buy_amount_raw>',
-    'validTo': $VALID_TO,
-    'appData': '$APP_DATA',
-    'feeAmount': '0',
-    'kind': 'buy',
-    'partiallyFillable': False,
-    'signingScheme': 'eip1271',
-    'signature': '0x',
-    'from': '$VAULT_ADDRESS',
-    'sellTokenBalance': 'erc20',
-    'buyTokenBalance': 'erc20'
-}))
-")
-
-COW_RESPONSE=$(curl -s -X POST "https://api.cow.fi/sepolia/api/v1/orders" \
-  -H "Content-Type: application/json" \
-  -d "$JSON_BODY")
-
-COW_UID=$(python3 -c "
-import json, sys
-resp = '$COW_RESPONSE'
-try:
-    parsed = json.loads(resp)
-    if isinstance(parsed, str):
-        print(parsed)
-    else:
-        print('COW_API_ERROR: ' + json.dumps(parsed), flush=True)
-except:
-    print('COW_PARSE_ERROR: ' + resp, flush=True)
-")
-```
-
-If `COW_UID` starts with `COW_API_ERROR` or `COW_PARSE_ERROR`, print the error and stop.
-
-### 11. Show result
-
-```
-Limit buy order placed!
-  Tx hash       : <tx_hash>
-  Etherscan     : https://sepolia.etherscan.io/tx/<tx_hash>
-  Order ID      : <ORDER_ID>
-  CoW Order UID : <COW_UID>
-  Buy (exact)   : <buy_amount> <to_symbol>
-  Spend (max)   : <sell_amount_max> <from_symbol>
-  Expires       : <human_readable_expiry>
-  CoW Explorer  : https://explorer.cow.fi/sepolia/orders/<COW_UID>
-
-Save the Order ID to cancel: /cancel-order <ORDER_ID>
+Cancel with /cancel-order <UID>
 ```
