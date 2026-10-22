@@ -9,8 +9,8 @@ Arguments: $ARGUMENTS
 ---
 
 The vault's `receive()` wraps incoming ETH into its WETH (`0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9`)
-on arrival, so a plain ETH transfer is all funding takes. If the owner has set an auto-yield route for
-WETH, the vault also tries to deposit it there in the same transaction.
+on arrival, so a plain ETH transfer is all funding takes. Funding never deposits anywhere by itself: an
+auto-yield route the owner set is swept later by the auto-yield keeper, not on arrival.
 
 Any other token is funded with an ordinary ERC-20 `transfer` to the vault address.
 
@@ -66,5 +66,3 @@ Vault funded!
   Sent         : <eth_amount> ETH (wrapped to WETH by the vault)
   Vault WETH   : <before> → <after> (wei)
 ```
-
-If WETH did not rise by the full amount, an auto-yield route moved it — run `/vault-balances`.
