@@ -1,97 +1,92 @@
-Supply an asset from a BittyVault into the Aave lending protocol on Sepolia.
+Supply an asset from a BittyVault into a lending protocol (Aave v3).
 
-**Usage:** `/supply <asset> <amount>`
+**Usage:** `/supply <asset> <amount|max>`
 
-- `<asset>` — token symbol (WETH, WBTC, USDT, USDC) or a raw `0x…` address
-- `<amount>` — human-readable amount (e.g. `1.5`), or `max` for the vault's full balance
+- `<asset>` — token symbol (WETH, WBTC, USDC, USDT) or a raw `0x…` address
+- `<amount>` — human-readable amount (e.g. `1.5`), or `max` for the vault's whole wallet balance
 
 Arguments: $ARGUMENTS
 
-Parse `$ARGUMENTS` as two parts: asset, amount.
-If any are missing, stop and print: "Usage: /supply <asset> <amount>"
+Parse `$ARGUMENTS` as: asset, amount. If either is missing, stop and print the usage line.
 
----
-
-## Sepolia tokens
-
-| Symbol | Address | Decimals |
-|--------|---------|----------|
-| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
-| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
-| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
-| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
-
-On Aave's Sepolia market only **WBTC** can be supplied: WETH and USDC have no reserve, and USDT is
-over its supply cap (Aave error `51`). WBTC is Aave's test token — anyone can mint it straight into the
-vault from Aave's Sepolia faucet:
-
-```bash
-cast send 0xC959483DBa39aa9E78757139af0e9a2EDEb3f42D "mint(address,address,uint256)" \
-  0x29f2D40B0605204364af54EC677bD022dA425d03 $VAULT_ADDRESS 100000000 \
-  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"   # 1 WBTC
-```
+Run every command from the repo root. `bin/bitty` loads the network and `.env` itself.
 
 ---
 
 ## Steps
 
-### 1. Check environment and resolve the lending protocol
+### 1. Preflight — needs the `SUPPLY` permission (bit 2)
 
 ```bash
-: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
-: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
-GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
-for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
-  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 2 ] && LENDING_PROTOCOL=$p
-done
-cast call $VAULT_ADDRESS "isProtocolAllowed(address)(bool)" $LENDING_PROTOCOL --rpc-url "<rpc_url>"
+bin/bitty preflight 2
 ```
 
-Guard categories: `1` staking, `2` lending, `3` market trade, `4` intent. If no lending protocol is
-found or it is not allowed on this vault, stop and say so.
+If it prints an `Error:`, show it to the user and stop. Otherwise show its summary.
 
 ### 2. Resolve the asset and amount
 
-Use the table above for symbols; for a raw address read `decimals()(uint8)`. Read the vault balance:
-
 ```bash
-cast call <asset_address> "balanceOf(address)(uint256)" $VAULT_ADDRESS --rpc-url "<rpc_url>"
+bin/bitty token <asset>                     # → <address> <decimals> <symbol>
+bin/bitty balance <address>                 # the vault's wallet balance, raw
 ```
 
-`max` → the full balance. Otherwise `<amount_raw>` = `cast to-unit <amount>ether wei` for 18 decimals,
-or `<amount> × 10^decimals` as an integer. If the balance is short, stop and show both numbers.
+- `max` → use the wallet balance as `<amount_raw>`.
+- Otherwise `bin/bitty raw <amount> <decimals>` → `<amount_raw>`.
 
-### 3. Read the current position
-
-```bash
-cast call $VAULT_ADDRESS "getBalances(address[],address[])(uint256[])" \
-  "[$LENDING_PROTOCOL]" "[<asset_address>]" --rpc-url "<rpc_url>"
+Stop if `<amount_raw>` is 0, or larger than the wallet balance:
+```
+Error: the vault holds only <bin/bitty human balance decimals> <symbol>.
 ```
 
-Save as `<supplied_before>`.
+Check the vault may hold the asset:
+```bash
+bin/bitty call "isAssetAllowed(address)(bool)" <address>
+```
+If `false`, stop: `Error: <symbol> is not on this vault's allow list.`
+
+### 3. Pick the lending protocol
+
+```bash
+bin/bitty protocols lending                 # → "<address> <name>" per line
+```
+
+- None → stop: `Error: no lending protocol is open to this vault on <network>.`
+- One → use it.
+- Several → list them and ask the user which one.
 
 ### 4. Preview and confirm
 
-Print vault, asset, amount (human and raw), lending protocol and `<supplied_before>`.
-Ask: "Proceed with supply? (yes/no)"
+```
+Supply
+  Vault    : <vault>
+  Asset    : <amount> <symbol>  (<amount_raw> raw)
+  Protocol : <name> (<protocol>)
+```
 
-### 5. Deposit
+Ask: "Supply? (yes/no)". Stop on anything but yes.
+
+### 5. Send
 
 ```bash
-cast send $VAULT_ADDRESS "deposit(address,address,uint256)" \
-  $LENDING_PROTOCOL <asset_address> <amount_raw> \
-  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
+bin/bitty send "deposit(address,address,uint256)" <protocol> <address> <amount_raw>
 ```
 
-On revert: `OwnableUnauthorizedAccount` means this key is not the owner or an unexpired manager with
-`PERM_SUPPLY`; `VaultLocked` means the owner has locked the vault.
+On a revert, show the reason and stop. Common ones:
+- `InvalidDepositableProtocol` — the protocol was retired or removed from the vault's allow list.
+- `OwnableUnauthorizedAccount` — the grant changed since the preflight; rerun it.
+- `VaultLocked` — the owner locked the vault since the preflight; nothing can be deposited now.
+- Aave error `51` — the reserve's supply cap is reached or the reserve is frozen.
 
-### 6. Show result
+### 6. Result
 
-Re-run step 3 and print:
+```bash
+bin/bitty position <protocol> <address>
+bin/bitty balance <address>
 ```
-Supply successful!
-  Tx        : https://sepolia.etherscan.io/tx/<tx_hash>
-  Supplied  : <amount> <symbol>
-  Position  : <supplied_before> → <supplied_after> (raw)
+
+```
+Supplied <amount> <symbol> to <name>.
+  Tx            : <hash and explorer link from step 5>
+  Now supplied  : <position, human>
+  Wallet balance: <balance, human>
 ```

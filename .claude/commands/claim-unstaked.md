@@ -1,62 +1,76 @@
-Claim finalized unstake requests from the Lido staking protocol into a BittyVault on Sepolia.
+Claim finalised staking withdrawals (Lido) into a BittyVault. Step 2 of `/unstake` for
+protocols that settle later.
 
-**Usage:** `/claim-unstaked [request_id_1] [request_id_2] ...`
+**Usage:** `/claim-unstaked [request_id …]`
 
-- `[request_ids]` — optional. If omitted, every pending request id of the vault is claimed.
+- `[request_id …]` — optional ids to claim. Omitted: every pending id of every staking protocol
+  the vault holds a position in.
 
 Arguments: $ARGUMENTS
+
+Run every command from the repo root.
 
 ---
 
 ## Steps
 
-### 1. Check environment and resolve the staking protocol
+### 1. Preflight — needs the `YIELD` permission (bit 1)
+
+A locked vault refuses it: a lock leaves the asset manager's grant dormant until the owner
+unlocks.
 
 ```bash
-: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
-: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
-WETH=0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9
-GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
-for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
-  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 1 ] && STAKING_PROTOCOL=$p
-done
+bin/bitty preflight 1
 ```
 
-### 2. Resolve the ids
+If it prints an `Error:`, show it and stop.
+
+### 2. Find the pending withdrawals
 
 ```bash
-cast call $VAULT_ADDRESS "getPendingWithdrawalIds(address)(uint256[])" $STAKING_PROTOCOL --rpc-url "<rpc_url>"
+bin/bitty protocols staking held
+bin/bitty pending <protocol>                # for each
 ```
 
-Use the ids from `$ARGUMENTS` if given (each must be in this list), otherwise all of them. If the list
-is empty, stop: "No pending unstake requests."
+Skip protocols with no pending ids (Sky never has any — it settles at once).
+
+- No ids anywhere → stop: `Nothing to claim — the vault has no pending withdrawals.`
+- Ids given in the arguments → keep only those; an id that is not pending anywhere is an error
+  (`Error: request <id> is not pending for this vault.`).
+
+Lido claims only the FINALISED ones among the ids it is given and skips the rest without
+reverting, so there is no need to check finality first: whatever is still pending after the claim
+is simply not finalised yet. A claim pays out WETH.
 
 ### 3. Preview and confirm
 
+```
+Claim withdrawals
+  Vault    : <vault>
+  <name> (<protocol>): ids <id, id, …>
+```
+
+Ask: "Claim? (yes/no)". Stop on anything but yes.
+
+### 4. Send — one transaction per protocol
+
 ```bash
-WETH_BEFORE=$(cast call $WETH "balanceOf(address)(uint256)" $VAULT_ADDRESS --rpc-url "<rpc_url>")
+bin/bitty send "claimWithdrawals(address,uint256[])" <protocol> "[<id>,<id>,…]"
 ```
 
-Print the ids and the vault's WETH balance. Ask: "Claim these requests? (yes/no)"
+On a revert, show the reason and stop.
 
-### 4. Claim
+### 5. Result
 
 ```bash
-cast send $VAULT_ADDRESS "claimWithdrawals(address,uint256[])" \
-  $STAKING_PROTOCOL "[<id1>,<id2>,...]" \
-  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
+bin/bitty pending <protocol>
+bin/bitty balance <WETH address from bin/bitty token WETH>
 ```
 
-The Lido adapter claims only the requests that are finalized and leaves the rest pending.
-
-### 5. Show result
-
-Re-read the WETH balance and the pending ids, then print:
 ```
-Claim complete!
-  Tx           : https://sepolia.etherscan.io/tx/<tx_hash>
-  Vault WETH   : <before> → <after> (wei)
-  Still pending: <ids or none>
+Claimed from <name>.
+  Tx             : <hash and explorer link>
+  Claimed ids    : <ids that are no longer pending>
+  Not yet final  : <ids still pending, or "none"> — run /claim-unstaked again later
+  WETH balance   : <human>
 ```
-
-If nothing changed, the requests are not finalized yet — try again later.

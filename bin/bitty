@@ -1,0 +1,763 @@
+#!/usr/bin/env bash
+# bitty — the shared plumbing behind every skill in .claude/commands/.
+#
+# One place for the network constants, the role preflight, protocol discovery, unit conversion
+# and the CoW order maths, so each skill is the steps that are its own and nothing else. A script
+# rather than a markdown table because every command a skill runs starts in a fresh shell: a value
+# only reaches it by being computed there.
+#
+# Serves the ASSET MANAGER of BittyVault 1.0.7 vaults (abi/vault-1.0.7.json), with CoW adapter 1.0.4
+# clones (abi/cow-1.0.4.json). The owner key never belongs here: the preflight refuses it.
+#
+# Usage: bin/bitty <command> [args]   — run `bin/bitty help` for the list.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+die() { echo "Error: $*" >&2; exit 1; }
+
+# ---------------------------------------------------------------------------------------------
+# Environment and network constants
+# ---------------------------------------------------------------------------------------------
+
+load_env() {
+  local preset="${VAULT_ADDRESS:-}"
+  set -a
+  # shellcheck disable=SC1091
+  [ -f "$ROOT/.env" ] && . "$ROOT/.env"
+  NETWORK="${NETWORK:-}"
+  [ -n "$NETWORK" ] || { set +a; die "NETWORK is not set in .env (sepolia or mainnet)"; }
+  # shellcheck disable=SC1090
+  [ -f "$ROOT/$NETWORK/.env" ] && . "$ROOT/$NETWORK/.env"
+  set +a
+  # A blank VAULT_ADDRESS in the files leaves one set in the environment standing.
+  VAULT_ADDRESS="$(tr -d '[:space:]' <<<"${VAULT_ADDRESS:-}")"
+  VAULT_ADDRESS="${VAULT_ADDRESS:-$preset}"
+
+  # Same on every network: one CREATE2 address per contract.
+  GUARD=0x000000000F5fcD35885BfE4c700042cE7cb39554
+  FACTORY=0x3d7Ed3cD011B423dd11BE280BF926667CAf0F120
+  FORWARDER=0xD6013C5e339cd3546c0c7E86c306554a63FbAa6F
+  COW_SETTLEMENT=0x9008D19f58AAbD9eD0D60971565AA8510560ab41
+  BITTY_API=https://bitty.io
+  BITTY_VERSION=v2
+  VAULT_MIN_VERSION=1000007
+  COW_MIN_VERSION=1000004
+
+  case "$NETWORK" in
+    sepolia)
+      CHAIN_ID=11155111
+      COW_API=https://api.cow.fi/sepolia/api/v1
+      COW_EXPLORER=https://explorer.cow.fi/sepolia/orders/
+      TX_EXPLORER=https://sepolia.etherscan.io/tx/
+      RPC_PUBLIC=https://ethereum-sepolia-rpc.publicnode.com
+      TOKENS="WETH:0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9:18
+WBTC:0x29f2D40B0605204364af54EC677bD022dA425d03:8
+USDC:0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238:6
+USDT:0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0:6"
+      ;;
+    mainnet)
+      CHAIN_ID=1
+      COW_API=https://api.cow.fi/mainnet/api/v1
+      COW_EXPLORER=https://explorer.cow.fi/orders/
+      TX_EXPLORER=https://etherscan.io/tx/
+      RPC_PUBLIC=https://ethereum-rpc.publicnode.com
+      TOKENS="WETH:0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2:18
+WBTC:0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599:8
+USDC:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48:6
+USDT:0xdAC17F958D2ee523a2206206994597C13D831ec7:6"
+      ;;
+    *) die "unsupported NETWORK=$NETWORK (sepolia or mainnet)" ;;
+  esac
+
+  # RPC_URL wins when set (your own node, or a local fork for testing), then Alchemy, then public.
+  if [ -n "${RPC_URL:-}" ]; then
+    RPC="$RPC_URL"
+  elif [ -n "${ALCHEMY_KEY:-}" ]; then
+    RPC="https://eth-$NETWORK.g.alchemy.com/v2/$ALCHEMY_KEY"
+  else
+    RPC="$RPC_PUBLIC"
+  fi
+  export ETH_RPC_URL="$RPC"
+}
+
+need_vault() {
+  [ -n "${VAULT_ADDRESS:-}" ] || die "VAULT_ADDRESS is not set in $NETWORK/.env"
+  [[ "$VAULT_ADDRESS" =~ ^0x[0-9a-fA-F]{40}$ ]] || die "VAULT_ADDRESS is not an address: $VAULT_ADDRESS"
+}
+
+need_key() {
+  [ -n "${PRIVATE_KEY:-}" ] || die "PRIVATE_KEY is not set in $NETWORK/.env (the asset manager's key)"
+  ME=$(cast wallet address --private-key "$PRIVATE_KEY")
+}
+
+lc() { tr '[:upper:]' '[:lower:]' <<<"$1"; }
+
+# `cast call` prints big numbers as "123 [1.23e2]"; keep the first field of each line.
+first() { awk '{print $1}'; }
+
+vcall() { cast call "$VAULT_ADDRESS" "$@" | first; }
+
+now() { cast block latest -f timestamp; }
+
+when() { date -r "$1" 2>/dev/null || date -d "@$1"; }
+
+ZERO=0x0000000000000000000000000000000000000000
+
+# ---------------------------------------------------------------------------------------------
+# Units and tokens
+# ---------------------------------------------------------------------------------------------
+
+# raw <amount> <decimals> — human amount to integer units, exactly (no float rounding).
+to_raw() {
+  python3 - "$1" "$2" <<'PY'
+import sys
+from decimal import Decimal, ROUND_DOWN
+a, d = Decimal(sys.argv[1]), int(sys.argv[2])
+if a < 0: sys.exit("negative amount")
+print(int((a * (Decimal(10) ** d)).to_integral_value(rounding=ROUND_DOWN)))
+PY
+}
+
+to_human() {
+  python3 - "$1" "$2" <<'PY'
+import sys
+from decimal import Decimal
+r, d = Decimal(sys.argv[1]), int(sys.argv[2])
+s = format(r / (Decimal(10) ** d), "f")
+print(s.rstrip("0").rstrip(".") if "." in s else s)
+PY
+}
+
+# token <SYMBOL|0x…> → "<address> <decimals> <symbol>"
+token() {
+  local q="$1" line sym addr dec
+  if [[ "$q" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
+    while IFS=: read -r sym addr dec; do
+      if [ "$(lc "$addr")" = "$(lc "$q")" ]; then echo "$addr $dec $sym"; return; fi
+    done <<<"$TOKENS"
+    dec=$(cast call "$q" "decimals()(uint8)" 2>/dev/null) || die "$q does not answer decimals() — not an ERC-20?"
+    sym=$(cast call "$q" "symbol()(string)" 2>/dev/null | tr -d '"') || sym="?"
+    echo "$q $dec $sym"
+    return
+  fi
+  local up
+  up=$(tr '[:lower:]' '[:upper:]' <<<"$q")
+  while IFS=: read -r sym addr dec; do
+    if [ "$sym" = "$up" ]; then echo "$addr $dec $sym"; return; fi
+  done <<<"$TOKENS"
+  die "unknown token '$q' on $NETWORK — pass its 0x address instead"
+}
+
+# ---------------------------------------------------------------------------------------------
+# Preflight: who is this key to the vault, and may that role do what the skill asks?
+# ---------------------------------------------------------------------------------------------
+
+perm_name() {
+  case "$1" in
+    0) echo "none" ;; 1) echo "YIELD" ;; 2) echo "SUPPLY" ;; 4) echo "MARKET_TRADE" ;; 8) echo "INTENT" ;;
+    *) echo "bits $1" ;;
+  esac
+}
+
+perm_list() {
+  local p=$1 out=""
+  for b in 1 2 4 8; do (( p & b )) && out="$out $(perm_name $b)"; done
+  echo "${out:- none}"
+}
+
+# role — "manager <permissions> <expiresAt>" while this key's grant is live, "owner" for the owner's
+# key (which the preflight refuses), otherwise "none". A lock leaves the grant dormant but still
+# reports it; the preflight refuses it then.
+role() {
+  need_vault
+  need_key
+  local owner s manager expires pending pending_at perms pending_perms t
+  owner=$(vcall "owner()(address)")
+  if [ "$(lc "$owner")" = "$(lc "$ME")" ]; then echo owner; return; fi
+  s=$(vcall "getAssetManagerSettings()(address,uint64,address,uint64,uint32,uint32)")
+  { read -r manager; read -r expires; read -r pending; read -r pending_at; read -r perms; read -r pending_perms; } <<<"$s"
+  t=$(now)
+  if [ "$(lc "$manager")" = "$(lc "$ME")" ] && (( expires > t )); then echo "manager $perms $expires"; return; fi
+  echo none
+}
+
+# preflight <permission bit, 0 for none> — is this key the vault's live asset manager, holding the
+# permission, on an unlocked 1.0.7 vault? A lock leaves the grant dormant: nothing works while locked.
+preflight() {
+  local need="${1:-0}"
+  need_vault
+  need_key
+
+  [ "$(cast code "$VAULT_ADDRESS")" != "0x" ] ||
+    die "no contract at $VAULT_ADDRESS on $NETWORK — the vault is not activated yet"
+
+  local g
+  g=$(cast call "$VAULT_ADDRESS" "guard()(address)" 2>/dev/null) ||
+    die "$VAULT_ADDRESS does not answer guard() — not a BittyVault"
+  [ "$(lc "$g")" = "$(lc "$GUARD")" ] || die "$VAULT_ADDRESS is not a Bitty vault of this guard (its guard is $g)"
+
+  local version name
+  version=$(vcall "vaultVersion()(uint256)" 2>/dev/null || echo 0)
+  name=$(cast call "$VAULT_ADDRESS" "versionName()(string)" 2>/dev/null | tr -d '"' || echo "?")
+  (( version >= VAULT_MIN_VERSION )) ||
+    die "the vault runs $name; these skills need 1.0.7 or later. Ask the owner to upgrade it in the Bitty app."
+
+  local r perms expires
+  r=$(role)
+  case "$r" in
+    owner)
+      die "PRIVATE_KEY is the vault OWNER's key. It must never be used here — remove it from $NETWORK/.env and put the asset manager's key instead. The owner acts in the Bitty app."
+      ;;
+    manager*)
+      read -r _ perms expires <<<"$r"
+      if (( need != 0 )) && (( (perms & need) != need )); then
+        die "your grant lacks the $(perm_name "$need") permission (you hold:$(perm_list "$perms")). Ask the owner to add it in the Bitty app."
+      fi
+      ;;
+    *)
+      local s manager pending pending_at pending_perms
+      s=$(vcall "getAssetManagerSettings()(address,uint64,address,uint64,uint32,uint32)")
+      { read -r manager; read -r expires; read -r pending; read -r pending_at; read -r perms; read -r pending_perms; } <<<"$s"
+      if [ "$(lc "$pending")" = "$(lc "$ME")" ] && (( pending_at > $(now) )); then
+        die "your asset-manager grant on $VAULT_ADDRESS takes effect at $(when "$pending_at") (permissions:$(perm_list "$pending_perms")). Try again then."
+      fi
+      if [ "$(lc "$manager")" = "$(lc "$ME")" ]; then
+        die "your asset-manager grant on $VAULT_ADDRESS has expired. Ask the owner to renew it in the Bitty app."
+      fi
+      die "$ME is not the asset manager of $VAULT_ADDRESS. The owner appoints one in the Bitty app (Security → Asset manager)."
+      ;;
+  esac
+
+  local lock
+  lock=$(vcall "lockLevel()(uint8)")
+  [ "$lock" = "0" ] ||
+    die "the vault is locked (level $lock). A lock leaves the asset manager's grant dormant: nothing works until the owner unlocks it."
+
+  echo "Network      : $NETWORK"
+  echo "Vault        : $VAULT_ADDRESS ($name)"
+  echo "You          : $ME (asset manager)"
+  echo "Permissions  :$(perm_list "$perms")"
+  echo "Grant expires: $(when "$expires")"
+}
+
+# ---------------------------------------------------------------------------------------------
+# Protocols, read from the guard — nothing here is hardcoded
+# ---------------------------------------------------------------------------------------------
+
+lineage_name() {
+  case "$(lc "$1")" in
+    0xb483fc7e2ef421fd3f531d98600fae2454913db43d59352cc35f3f71c22e0190) echo "Aave-v3" ;;
+    0x7002a2bc3332d28a51a0eb75c350c81e5fcbb714e4f937342ee2d6db84f0337b) echo "Lido" ;;
+    0x7a481f90906a6d4ac0dd793b9153257b33e3227bd9bcf96f9199bb1efbe5bef5) echo "Sky" ;;
+    0x2503d2a2da7819056508f18e01b36c369ce5d6e994d2c4828392fcd60972dffc) echo "Sky" ;;
+    0x05cc82f6bff8938b50ed25b8ebf27fd4bf8a1861bf02e2e27b2ef18c6c30b6b7) echo "Uniswap" ;;
+    0x13760db3e710dc1906387c725ccdffc5cdba63bc5ee4ee33aba010ddd0b1d86c) echo "CoW" ;;
+    *) echo "unknown" ;;
+  esac
+}
+
+category_number() {
+  case "$1" in
+    staking) echo 1 ;; lending) echo 2 ;; trade) echo 3 ;; intent) echo 4 ;;
+    *) die "unknown category '$1' (staking, lending, trade, intent)" ;;
+  esac
+}
+
+addr_list() { tr -d '[] ' | tr ',' '\n' | grep -E '^0x' || true; }
+
+# protocols <staking|lending|trade|intent> [open|held]
+#   open (default): live protocols the vault may ENTER (registered, not deprecated, allowed).
+#   held:           every protocol of the category the vault has a position in (its clone exists),
+#                   deprecated ones included — a retired protocol must still be exitable.
+# Prints "<address> <name>" per line.
+protocols() {
+  need_vault
+  local cat mode="${2:-open}" list p c
+  cat=$(category_number "$1")
+  if [ "$mode" = "held" ]; then
+    list=$( { cast call "$GUARD" "getProtocols()(address[])" | addr_list;
+              cast call "$GUARD" "getDeprecatedProtocols()(address[])" | addr_list; } )
+  else
+    list=$(cast call "$GUARD" "getProtocols()(address[])" | addr_list)
+  fi
+  # A vault keeps ONE clone per adapter lineage, so a retired adapter and its successor share a
+  # position. Listed once, under the live adapter (getProtocols comes before the deprecated list).
+  local seen="" clone
+  while read -r p; do
+    [ -n "$p" ] || continue
+    c=$(cast call "$GUARD" "protocolCategory(address)(uint8)" "$p")
+    [ "$c" = "$cat" ] || continue
+    if [ "$mode" = "held" ]; then
+      clone=$(cast call "$VAULT_ADDRESS" "getClone(address)(address)" "$p")
+      [ "$clone" != "0x0000000000000000000000000000000000000000" ] || continue
+      case "$seen" in *"$clone"*) continue ;; esac
+      seen="$seen $clone"
+    else
+      [ "$(cast call "$VAULT_ADDRESS" "isProtocolAllowed(address)(bool)" "$p")" = "true" ] || continue
+    fi
+    echo "$p $(lineage_name "$(cast call "$p" "protocolLineage()(bytes32)" 2>/dev/null || echo 0x)")"
+  done <<<"$list"
+}
+
+# ---------------------------------------------------------------------------------------------
+# Transactions
+# ---------------------------------------------------------------------------------------------
+
+# send <signature> [args…] — sends from the asset manager's key to the vault; prints the hash.
+send() {
+  need_vault
+  tx "$VAULT_ADDRESS" "$@"
+}
+
+# tx <to> <signature|--value …> [args…] — the same from the asset manager's key, to any contract.
+tx() {
+  need_key
+  local to="$1" out hash status
+  shift
+  out=$(cast send "$to" "$@" --private-key "$PRIVATE_KEY" --json) || die "transaction failed (see the revert above)"
+  hash=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["transactionHash"])' <<<"$out")
+  status=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])' <<<"$out")
+  [ "$status" = "0x1" ] || [ "$status" = "1" ] || die "transaction $hash reverted: $TX_EXPLORER$hash"
+  echo "Tx: $hash"
+  echo "    $TX_EXPLORER$hash"
+}
+
+# ---------------------------------------------------------------------------------------------
+# CoW orders: hashing, signing, posting. Every order is the vault's (ERC-1271): signed by the owner
+# or the asset manager — here, always the asset manager — and verified at settlement by the vault's
+# CoW clone (adapter 1.0.4 or later).
+# ---------------------------------------------------------------------------------------------
+
+ORDER_TYPEHASH=0xd5a25ba2e97094ad7d83dc28a6572da797d6b3e7fc6663bd93efb789fc17e489
+KIND_SELL=0xf3b277728b3fee749481eb3e0b3b48980dbbab78658fc419025cb16eee346775
+KIND_BUY=0x6ed88e868af0a1983e3886d5f3e95a2fafbd6c3450bc229e27342283dc429ccc
+BALANCE_ERC20=0x5a28e9363bb942b639270062aa6bb295f434bcdfc42c97267bf003f272060dc9
+# The adapter's PARTNER_FEE_RECIPIENT; its APP_DATA is keccak256 of LIMIT_APP_DATA_DOC, byte for byte.
+PARTNER=0xF0E7f6998B362BD15CF819C7EBfcaCe8865FECA0
+LIMIT_APP_DATA_DOC='{"appCode":"BittyVault","metadata":{"partnerFee":{"bps":20,"recipient":"0xF0E7f6998B362BD15CF819C7EBfcaCe8865FECA0"}},"version":"1.3.0"}'
+
+twap_app_data_doc() {
+  printf '{"appCode":"BittyVault","environment":"%s","metadata":{"partnerFee":{"bps":20,"recipient":"%s"}},"version":"1.3.0"}' "$1" "$PARTNER"
+}
+
+kind_hash() { [ "$1" = "sell" ] && echo "$KIND_SELL" || echo "$KIND_BUY"; }
+
+domain_separator() { cast call "$COW_SETTLEMENT" "domainSeparator()(bytes32)"; }
+
+# order_digest <kind> <sell> <buy> <receiver> <sellAmount> <buyAmount> <validTo> <appData>
+# The GPv2 EIP-712 digest — what CoW hashes, what the clone recomputes, and the first 32 bytes of
+# the order UID.
+order_digest() {
+  local sh
+  sh=$(cast keccak "$(cast abi-encode \
+    "f(bytes32,address,address,address,uint256,uint256,uint32,bytes32,uint256,bytes32,bool,bytes32,bytes32)" \
+    "$ORDER_TYPEHASH" "$2" "$3" "$4" "$5" "$6" "$7" "$8" 0 "$(kind_hash "$1")" false "$BALANCE_ERC20" "$BALANCE_ERC20")")
+  local ds
+  ds=$(domain_separator)
+  cast keccak "0x1901${ds#0x}${sh#0x}"
+}
+
+# order_uid <digest> <owner> <validTo> — 56 bytes: digest ‖ owner ‖ uint32 validTo.
+order_uid() {
+  printf '0x%s%s%08x\n' "${1#0x}" "$(lc "${2#0x}")" "$3"
+}
+
+order_tuple() { # kind sell buy receiver sellAmount buyAmount validTo appData
+  echo "($2,$3,$4,$5,$6,$7,$8,0,$(kind_hash "$1"),false,$BALANCE_ERC20,$BALANCE_ERC20)"
+}
+
+ORDER_TUPLE_TYPE="(address,address,address,uint256,uint256,uint32,bytes32,uint256,bytes32,bool,bytes32,bytes32)"
+TWAP_TUPLE_TYPE="(address,address,uint256,uint256,uint256,uint256,uint256)"
+
+typed_domain() {
+  printf '{"name":"Gnosis Protocol","version":"v2","chainId":%s,"verifyingContract":"%s"}' "$CHAIN_ID" "$COW_SETTLEMENT"
+}
+
+DOMAIN_TYPE='[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint256"},{"name":"verifyingContract","type":"address"}]'
+
+# The signer never signs the CoW digest itself: a plain signature over it would also fill from the
+# signer's own wallet. It signs a VaultOrder — the CoW order nested whole, with the vault named —
+# under Bitty's own domain, which CoW cannot settle. CoWSwapV1Protocol.vaultOrderDigest.
+BITTY_DOMAIN_TYPE='[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint256"}]'
+bitty_domain() { printf '{"name":"Bitty Vault Order","version":"1","chainId":%s}' "$CHAIN_ID"; }
+
+# sign_order <kind> <sell> <buy> <receiver> <sellAmount> <buyAmount> <validTo> <appData>
+sign_order() {
+  local json
+  json=$(printf '{"types":{"EIP712Domain":%s,"VaultOrder":[{"name":"vault","type":"address"},{"name":"order","type":"Order"}],"Order":[{"name":"sellToken","type":"address"},{"name":"buyToken","type":"address"},{"name":"receiver","type":"address"},{"name":"sellAmount","type":"uint256"},{"name":"buyAmount","type":"uint256"},{"name":"validTo","type":"uint32"},{"name":"appData","type":"bytes32"},{"name":"feeAmount","type":"uint256"},{"name":"kind","type":"string"},{"name":"partiallyFillable","type":"bool"},{"name":"sellTokenBalance","type":"string"},{"name":"buyTokenBalance","type":"string"}]},"primaryType":"VaultOrder","domain":%s,"message":{"vault":"%s","order":{"sellToken":"%s","buyToken":"%s","receiver":"%s","sellAmount":"%s","buyAmount":"%s","validTo":%s,"appData":"%s","feeAmount":"0","kind":"%s","partiallyFillable":false,"sellTokenBalance":"erc20","buyTokenBalance":"erc20"}}}' \
+    "$BITTY_DOMAIN_TYPE" "$(bitty_domain)" "$VAULT_ADDRESS" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$1")
+  cast wallet sign --data "$json" --private-key "$PRIVATE_KEY"
+}
+
+# twap_digest <vault> <sell> <buy> <sellPerPart> <buyPerPart> <startTime> <partDuration> <numParts>
+# CoWSwapV1Protocol.twapDigest: the schedule, bound to ONE vault, under the settlement domain.
+TWAP_TYPEHASH_STRING="TwapOrder(address vault,address sellToken,address buyToken,uint256 sellAmountPerPart,uint256 buyAmountPerPart,uint256 startTime,uint256 partDuration,uint256 numParts)"
+twap_digest() {
+  local sh ds
+  sh=$(cast keccak "$(cast abi-encode "f(bytes32,address,address,address,uint256,uint256,uint256,uint256,uint256)" \
+    "$(cast keccak "$TWAP_TYPEHASH_STRING")" "$@")")
+  ds=$(domain_separator)
+  cast keccak "0x1901${ds#0x}${sh#0x}"
+}
+
+sign_twap() { # same arguments as twap_digest
+  local json
+  json=$(printf '{"types":{"EIP712Domain":%s,"TwapOrder":[{"name":"vault","type":"address"},{"name":"sellToken","type":"address"},{"name":"buyToken","type":"address"},{"name":"sellAmountPerPart","type":"uint256"},{"name":"buyAmountPerPart","type":"uint256"},{"name":"startTime","type":"uint256"},{"name":"partDuration","type":"uint256"},{"name":"numParts","type":"uint256"}]},"primaryType":"TwapOrder","domain":%s,"message":{"vault":"%s","sellToken":"%s","buyToken":"%s","sellAmountPerPart":"%s","buyAmountPerPart":"%s","startTime":"%s","partDuration":"%s","numParts":"%s"}}' \
+    "$DOMAIN_TYPE" "$(typed_domain)" "$@")
+  cast wallet sign --data "$json" --private-key "$PRIVATE_KEY"
+}
+
+# limit_payload <kind> <sell> <buy> <sellAmount> <buyAmount> <validTo> <appData>
+# abi.encode(GPv2Order.Data, signerSignature, appDataSalt = 0) — CoWSwapV1Protocol.validateOffchainOrder.
+limit_payload() {
+  local sig
+  sig=$(sign_order "$1" "$2" "$3" "$VAULT_ADDRESS" "$4" "$5" "$6" "$7")
+  cast abi-encode "f($ORDER_TUPLE_TYPE,bytes,uint256)" \
+    "$(order_tuple "$1" "$2" "$3" "$VAULT_ADDRESS" "$4" "$5" "$6" "$7")" "$sig" 0
+}
+
+# twap_part_payload <sell> <buy> <sellPerPart> <buyPerPart> <start> <duration> <n> <partIndex> <appData> <signature>
+# abi.encode(GPv2Order.Data, TwapOrder, partIndex, signerSignature) — validateOffchainTwapPart.
+twap_part_payload() {
+  local vt=$(($5 + ($8 + 1) * $6))
+  cast abi-encode "f($ORDER_TUPLE_TYPE,$TWAP_TUPLE_TYPE,uint256,bytes)" \
+    "$(order_tuple sell "$1" "$2" "$VAULT_ADDRESS" "$3" "$4" "$vt" "$9")" \
+    "($1,$2,$3,$4,$5,$6,$7)" "$8" "${10}"
+}
+
+# Register an appData document with CoW so solvers can resolve its hash and apply the partner fee.
+register_app_data() { # <hash> <document>
+  local body code
+  body=$(python3 -c 'import json,sys; print(json.dumps({"fullAppData": sys.argv[1]}))' "$2")
+  code=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$COW_API/app_data/$1" \
+    -H 'Content-Type: application/json' -d "$body")
+  [[ "$code" =~ ^2 ]] || die "CoW refused the appData document (HTTP $code)"
+}
+
+# post_order <kind> <sell> <buy> <sellAmount> <buyAmount> <validTo> <appData> <eip1271 payload>
+post_order() {
+  local body res
+  body=$(python3 - "$@" "$VAULT_ADDRESS" <<'PY'
+import json, sys
+k, s, b, sa, ba, vt, ad, sig, vault = sys.argv[1:]
+print(json.dumps({
+  "sellToken": s, "buyToken": b, "receiver": vault,
+  "sellAmount": sa, "buyAmount": ba, "validTo": int(vt), "appData": ad,
+  "feeAmount": "0", "kind": k, "partiallyFillable": False,
+  "sellTokenBalance": "erc20", "buyTokenBalance": "erc20",
+  "signingScheme": "eip1271", "signature": sig, "from": vault,
+}))
+PY
+)
+  res=$(curl -s -w '\n%{http_code}' -X POST "$COW_API/orders" -H 'Content-Type: application/json' -d "$body")
+  local code="${res##*$'\n'}" json="${res%$'\n'*}"
+  [[ "$code" =~ ^2 ]] || die "CoW rejected the order (HTTP $code): $json"
+  tr -d '"' <<<"$json"
+}
+
+# The CoW protocol the vault signs orders through. It must have a CLONE in the vault: CoW asks the
+# vault's isValidSignature at submission and settlement, and the vault only asks its clones. The
+# owner's updateProtocols creates it (enabling CoW in the Bitty app); being on Bitty's allow list
+# alone does not. A vault keeps one clone per adapter lineage, on the version it was cloned at until the
+# owner upgrades it, and a clone older than 1.0.4 cannot check a VaultOrder signature.
+intent_protocol() {
+  local p clone v
+  p=$(protocols intent | head -1 | awk '{print $1}')
+  [ -n "$p" ] || die "no CoW intent protocol is open to this vault on $NETWORK"
+  clone=$(cast call "$VAULT_ADDRESS" "getClone(address)(address)" "$p")
+  [ "$clone" != "$ZERO" ] ||
+    die "CoW is not set up on this vault yet: the owner has to enable it once in the Bitty app (it calls updateProtocols to add CoW $p). Until then the vault cannot sign any CoW order."
+  v=$(cast call "$clone" "protocolVersion()(uint256)" | first)
+  (( v >= COW_MIN_VERSION )) ||
+    die "the vault's CoW clone runs adapter $v; signing needs 1.0.4 (1000004) or later. Ask the owner to upgrade it in the Bitty app."
+  echo "$p"
+}
+
+# The newest live CoW adapter the guard registers — what a new vault should add with updateProtocols.
+latest_cow() {
+  local p best="" bestv=0 v
+  for p in $(cast call "$GUARD" "getProtocols()(address[])" | addr_list); do
+    [ "$(cast call "$GUARD" "protocolCategory(address)(uint8)" "$p")" = 4 ] || continue
+    v=$(cast call "$p" "protocolVersion()(uint256)" | first)
+    if (( v > bestv )); then best=$p; bestv=$v; fi
+  done
+  [ -n "$best" ] || die "the guard registers no CoW intent protocol on $NETWORK"
+  (( bestv >= COW_MIN_VERSION )) || die "the newest CoW adapter on $NETWORK is $bestv; 1.0.4 or later is needed"
+  echo "$best"
+}
+
+# The address that pulls the sell token at settlement is whatever the clone names as its spender
+# (CoW's vault relayer), so it needs an allowance first.
+ensure_spender() { # <intent> <token> <amount>
+  local clone spender allowance
+  clone=$(cast call "$VAULT_ADDRESS" "getClone(address)(address)" "$1")
+  spender=$(cast call "$clone" "spender()(address)")
+  allowance=$(cast call "$2" "allowance(address,address)(uint256)" "$VAULT_ADDRESS" "$spender" | first)
+  if python3 -c 'import sys; sys.exit(0 if int(sys.argv[1]) >= int(sys.argv[2]) else 1)' "$allowance" "$3"; then
+    return
+  fi
+  echo "Approving the CoW relayer ($spender) to pull this token from the vault…" >&2
+  send "approveIntentSpender(address,address)" "$1" "$2" >&2
+}
+
+# ---------------------------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------------------------
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  help)
+    cat <<'EOF'
+bin/bitty — shared plumbing for the BittyVault skills (1.0.7 vaults).
+
+  env                                   network, vault, RPC host and contract addresses
+  preflight <perm>                      check the key is the live asset manager (perm: 0,1,2,4,8)
+  role                                  manager <perms> <expiresAt> | owner | none
+  me                                    the address of PRIVATE_KEY
+  cast <args…>                          cast on this network's RPC (the key never printed)
+  cow-latest                            the newest CoW adapter, for a new vault's updateProtocols
+  token <SYMBOL|0x…>                    "<address> <decimals> <symbol>"
+  raw <amount> <decimals>               human amount → integer units
+  human <raw> <decimals>                integer units → human amount
+  balance <token address|ETH>           the vault's wallet balance of a token, or native ETH (raw)
+  protocols <category> [open|held]      staking | lending | trade | intent → "<address> <name>"
+  position <protocol> <token>           the vault's balance in a yield protocol (raw)
+  pending <protocol>                    pending withdrawal ids in a yield protocol
+  route <in> <out> <amountRaw> [bps]    exact-in swap route from the Bitty API (JSON)
+  call <signature> [args…]              read from the vault (cast call on VAULT_ADDRESS)
+  send <signature> [args…]              send a vault call from the asset manager's key
+  tx <to> <signature> [args…]           send to another contract from that key (setup only)
+  limit <kind> <sell> <buy> <sellAmt> <buyAmt> <validTo>
+                                        sign + post a CoW limit order; prints the order UID
+  twap <sell> <buy> <sellPerPart> <buyPerPart> <partDuration> <numParts> [sell|buy]
+                                        sign a TWAP schedule, post part 0, register the rest
+                                        (the side only labels it in the Bitty app)
+  orders                                the vault's open CoW orders
+  twaps                                 TWAP schedules the Bitty API holds for this vault
+  twap-uids <appData>                   every part's order UID for one TWAP schedule
+  cancel <uid…>                         invalidate CoW orders on chain (cancelIntentOrders)
+  twap-stop <appData>                   stop the Bitty API posting a schedule's later parts
+EOF
+    ;;
+
+  env)
+    load_env
+    echo "NETWORK=$NETWORK"
+    echo "CHAIN_ID=$CHAIN_ID"
+    if [ -z "${RPC_URL:-}" ] && [ -n "${ALCHEMY_KEY:-}" ]; then echo "RPC=${RPC%%/v2/*}/v2/<key>"; else echo "RPC=$RPC"; fi
+    echo "VAULT_ADDRESS=${VAULT_ADDRESS:-<unset>}"
+    echo "GUARD=$GUARD"
+    echo "FACTORY=$FACTORY"
+    echo "FORWARDER=$FORWARDER"
+    echo "COW_SETTLEMENT=$COW_SETTLEMENT"
+    echo "TX_EXPLORER=$TX_EXPLORER"
+    echo "ADDRESS_EXPLORER=${TX_EXPLORER%tx/}address/"
+    echo "COW_EXPLORER=$COW_EXPLORER"
+    ;;
+
+  preflight) load_env; preflight "$@" ;;
+  role) load_env; role ;;
+  me) load_env; need_key; echo "$ME" ;;
+  cast) load_env; cast "$@" ;;
+  cow-latest) load_env; latest_cow ;;
+
+  token) load_env; token "${1:?usage: token <SYMBOL|0x…>}" ;;
+  raw) to_raw "${1:?usage: raw <amount> <decimals>}" "${2:?decimals}" ;;
+  human) to_human "${1:?usage: human <raw> <decimals>}" "${2:?decimals}" ;;
+
+  balance)
+    load_env; need_vault
+    if [ "$(lc "${1:?usage: balance <token address|ETH>}")" = "eth" ]; then
+      cast balance "$VAULT_ADDRESS"
+    else
+      cast call "$1" "balanceOf(address)(uint256)" "$VAULT_ADDRESS" | first
+    fi
+    ;;
+
+  protocols) load_env; protocols "${1:?usage: protocols <staking|lending|trade|intent> [open|held]}" "${2:-open}" ;;
+
+  position)
+    load_env; need_vault
+    out=$(cast call "$VAULT_ADDRESS" "getBalances(address[],address[])(uint256[])" \
+      "[${1:?usage: position <protocol> <token>}]" "[${2:?token}]" 2>/dev/null) || { echo 0; exit 0; }
+    tr -d '[]' <<<"$out" | awk '{print $1}'
+    ;;
+
+  pending)
+    load_env; need_vault
+    cast call "$VAULT_ADDRESS" "getPendingWithdrawalIds(address)(uint256[])" "${1:?usage: pending <protocol>}" |
+      tr -d '[] ' | tr ',' '\n' | grep -E '^[0-9]+' | awk '{print $1}' || true
+    ;;
+
+  route)
+    load_env
+    curl -s "$BITTY_API/api/ethereum/trade/route?network=$NETWORK&version=$BITTY_VERSION&tokenIn=${1:?usage: route <in> <out> <amountRaw> [bps]}&tokenOut=${2:?out}&amountIn=${3:?amountRaw}&slippageBps=${4:-50}"
+    echo
+    ;;
+
+  call) load_env; need_vault; cast call "$VAULT_ADDRESS" "$@" | first ;;
+  send) load_env; send "$@" ;;
+  tx) load_env; tx "$@" ;;
+
+  limit)
+    load_env; need_vault; need_key
+    kind="${1:?usage: limit <sell|buy> <sell> <buy> <sellAmt> <buyAmt> <validTo>}"
+    sell="$2"; buy="$3"; sell_amt="$4"; buy_amt="$5"; valid_to="$6"
+    [ "$kind" = sell ] || [ "$kind" = buy ] || die "kind must be sell or buy"
+    intent=$(intent_protocol)
+    ensure_spender "$intent" "$sell" "$sell_amt"
+    app_data=$(cast keccak "$LIMIT_APP_DATA_DOC")
+    register_app_data "$app_data" "$LIMIT_APP_DATA_DOC"
+    payload=$(limit_payload "$kind" "$sell" "$buy" "$sell_amt" "$buy_amt" "$valid_to" "$app_data")
+    uid=$(post_order "$kind" "$sell" "$buy" "$sell_amt" "$buy_amt" "$valid_to" "$app_data" "$payload")
+    expected=$(order_uid "$(order_digest "$kind" "$sell" "$buy" "$VAULT_ADDRESS" "$sell_amt" "$buy_amt" "$valid_to" "$app_data")" "$VAULT_ADDRESS" "$valid_to")
+    [ "$(lc "$uid")" = "$(lc "$expected")" ] || echo "Warning: CoW returned UID $uid, expected $expected" >&2
+    echo "$uid"
+    ;;
+
+  twap)
+    load_env; need_vault; need_key
+    sell="${1:?usage: twap <sell> <buy> <sellPerPart> <buyPerPart> <partDuration> <numParts> [sell|buy]}"
+    buy="$2"; spp="$3"; bpp="$4"; dur="$5"; n="$6"; side="${7:-sell}"
+    [ "$side" = sell ] || [ "$side" = buy ] || die "side must be sell or buy"
+    intent=$(intent_protocol)
+    total=$(python3 -c 'import sys; print(int(sys.argv[1]) * int(sys.argv[2]))' "$spp" "$n")
+    ensure_spender "$intent" "$sell" "$total"
+    start=$(now)
+    doc=$(twap_app_data_doc "$start")
+    app_data=$(cast keccak "$doc")
+    register_app_data "$app_data" "$doc"
+    # ONE signature over the whole schedule; the clone reconstructs every part from it.
+    sig=$(sign_twap "$VAULT_ADDRESS" "$sell" "$buy" "$spp" "$bpp" "$start" "$dur" "$n")
+    valid_to=$((start + dur))
+    payload=$(twap_part_payload "$sell" "$buy" "$spp" "$bpp" "$start" "$dur" "$n" 0 "$app_data" "$sig")
+    uid=$(post_order sell "$sell" "$buy" "$spp" "$bpp" "$valid_to" "$app_data" "$payload")
+    # The Bitty API posts parts 1…n-1 as each slot opens, from the same parameters and signature.
+    reg=$(python3 - "$VAULT_ADDRESS" "$side" "$sell" "$buy" "$spp" "$bpp" "$start" "$dur" "$n" "$app_data" "$sig" <<'PY'
+import json, sys
+v, side, s, b, spp, bpp, start, dur, n, ad, sig = sys.argv[1:]
+print(json.dumps({"vaultAddress": v, "side": side, "sellToken": s, "buyToken": b,
+  "sellAmountPerPart": spp, "buyAmountMinPerPart": bpp, "startTime": int(start),
+  "partDuration": int(dur), "span": 0, "parts": int(n), "appData": ad, "signature": sig}))
+PY
+)
+    code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+      "$BITTY_API/api/ethereum/vaults/twap?network=$NETWORK&version=$BITTY_VERSION" \
+      -H 'Content-Type: application/json' -d "$reg")
+    echo "APP_DATA=$app_data"
+    echo "START=$start"
+    echo "PART0_UID=$uid"
+    if [[ "$code" =~ ^2 ]]; then
+      echo "SCHEDULED=yes"
+    else
+      echo "SCHEDULED=no (Bitty API HTTP $code) — only part 0 is live; later parts will not be posted"
+      # Without the API's record /cancel-twap cannot rebuild the parts, so hand them over now: the
+      # schedule's signature is public in part 0, and anyone could post a later part.
+      for ((i = 0; i < n; i++)); do
+        vt=$((start + (i + 1) * dur))
+        echo "PART_UID=$(order_uid "$(order_digest sell "$sell" "$buy" "$VAULT_ADDRESS" "$spp" "$bpp" "$vt" "$app_data")" "$VAULT_ADDRESS" "$vt")"
+      done
+    fi
+    ;;
+
+  orders)
+    load_env; need_vault
+    ORDERS="$(curl -s "$COW_API/account/$VAULT_ADDRESS/orders?limit=1000")" python3 -c '
+import json, os, time
+try:
+    orders = json.loads(os.environ["ORDERS"])
+except ValueError:
+    raise SystemExit("CoW API returned no order list")
+open_ = [o for o in orders if o.get("status") == "open"]
+if not open_:
+    print("No open orders.")
+for o in open_:
+    twap = "environment" in (o.get("fullAppData") or "")
+    print("%s  %-4s %s  sell %s %s  buy %s %s  until %s" % (
+        o["uid"], o["kind"], "twap-part" if twap else "limit    ",
+        o["sellAmount"], o["sellToken"], o["buyAmount"], o["buyToken"],
+        time.strftime("%Y-%m-%d %H:%M", time.localtime(o["validTo"]))))
+'
+    ;;
+
+  twaps)
+    load_env; need_vault
+    curl -s "$BITTY_API/api/ethereum/vaults/twap/$VAULT_ADDRESS?network=$NETWORK&version=$BITTY_VERSION"
+    echo
+    ;;
+
+  twap-uids)
+    # Rebuilt from any one posted part: every part shares tokens, amounts and appData, and part i
+    # is valid until startTime + (i+1)·partDuration. The schedule's start and duration come from
+    # the Bitty API's record of it.
+    load_env; need_vault
+    ad="$(lc "${1:?usage: twap-uids <appData>}")"
+    sched=$(curl -s "$BITTY_API/api/ethereum/vaults/twap/$VAULT_ADDRESS?network=$NETWORK&version=$BITTY_VERSION")
+    read -r start dur n < <(SCHED="$sched" python3 -c '
+import json, os, sys
+ad = sys.argv[1]
+for r in json.loads(os.environ["SCHED"]).get("data", []):
+    if r["appData"].lower() == ad:
+        print(r["startTime"], r["partDuration"], r["parts"]); break
+' "$ad" 2>/dev/null || true) || true
+    [ -n "${start:-}" ] || die "the Bitty API has no TWAP with appData $ad for this vault"
+    orders=$(curl -s "$COW_API/account/$VAULT_ADDRESS/orders?limit=1000")
+    read -r sell buy spp bpp < <(ORDERS="$orders" python3 -c '
+import json, os, sys
+ad = sys.argv[1]
+for o in json.loads(os.environ["ORDERS"]):
+    if o.get("appData", "").lower() == ad:
+        print(o["sellToken"], o["buyToken"], o["sellAmount"], o["buyAmount"]); break
+' "$ad" 2>/dev/null || true) || true
+    [ -n "${sell:-}" ] || die "CoW has no posted part of TWAP $ad — nothing to rebuild the parts from"
+    for ((i = 0; i < n; i++)); do
+      vt=$((start + (i + 1) * dur))
+      order_uid "$(order_digest sell "$sell" "$buy" "$VAULT_ADDRESS" "$spp" "$bpp" "$vt" "$ad")" "$VAULT_ADDRESS" "$vt"
+    done
+    ;;
+
+  cancel)
+    load_env; need_vault; need_key
+    [ $# -gt 0 ] || die "usage: cancel <uid…>"
+    intent=$(intent_protocol)
+    list=$(IFS=,; echo "[$*]")
+    send "cancelIntentOrders(address,bytes[])" "$intent" "$list"
+    ;;
+
+  twap-stop)
+    load_env; need_vault
+    code=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE \
+      "$BITTY_API/api/ethereum/vaults/twap/$VAULT_ADDRESS?network=$NETWORK&version=$BITTY_VERSION&appData=${1:?usage: twap-stop <appData>}")
+    [[ "$code" =~ ^2 ]] || die "the Bitty API did not stop the schedule (HTTP $code)"
+    echo "stopped"
+    ;;
+
+  # Internal: the hashing and signing on their own, and payload checks against a vault's own
+  # isValidSignature that post nothing to CoW — for testing against a local fork.
+  _order_digest) load_env; order_digest "$@" ;;
+  _sign_order) load_env; need_key; sign_order "$@" ;;
+  _twap_digest) load_env; twap_digest "$@" ;;
+  _sign_twap) load_env; need_key; sign_twap "$@" ;;
+  # _limit_check <kind> <sell> <buy> <sellAmt> <buyAmt> <validTo>: build the exact payload `limit`
+  # posts and ask the vault's own isValidSignature about it, without touching the CoW API.
+  _limit_check)
+    load_env; need_vault; need_key
+    ad=$(cast keccak "$LIMIT_APP_DATA_DOC")
+    d=$(order_digest "$1" "$2" "$3" "$VAULT_ADDRESS" "$4" "$5" "$6" "$ad")
+    cast call "$VAULT_ADDRESS" "isValidSignature(bytes32,bytes)(bytes4)" "$d" "$(limit_payload "$1" "$2" "$3" "$4" "$5" "$6" "$ad")"
+    ;;
+  # _twap_check <sell> <buy> <sellPerPart> <buyPerPart> <start> <duration> <n> <partIndex>
+  _twap_check)
+    load_env; need_vault; need_key
+    ad=$(cast keccak "$(twap_app_data_doc "$5")")
+    sig=$(sign_twap "$VAULT_ADDRESS" "$1" "$2" "$3" "$4" "$5" "$6" "$7")
+    vt=$(($5 + ($8 + 1) * $6))
+    d=$(order_digest sell "$1" "$2" "$VAULT_ADDRESS" "$3" "$4" "$vt" "$ad")
+    cast call "$VAULT_ADDRESS" "isValidSignature(bytes32,bytes)(bytes4)" "$d" "$(twap_part_payload "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$ad" "$sig")"
+    ;;
+
+  *) die "unknown command '$cmd' — run bin/bitty help" ;;
+esac

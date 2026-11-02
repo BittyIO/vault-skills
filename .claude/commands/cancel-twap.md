@@ -1,62 +1,85 @@
-Cancel a gasless CoW TWAP of a BittyVault on Sepolia — the current part and every part still to come.
+Cancel a CoW TWAP of a BittyVault — every part, including the ones not posted yet.
 
-**Usage:** `/cancel-twap <schedule_file>`
+Two things stop a TWAP, and both are needed:
+1. **On-chain** — the vault invalidates the order UID of EVERY part on the CoW settlement contract
+   (`cancelIntentOrders`). This is what makes it final: the schedule's signature is public once a
+   part is posted, so anyone could post a future part; an invalidated UID can never fill.
+2. **Bitty API** — the schedule is marked cancelled, so the Bitty API stops posting later parts.
 
-- `<schedule_file>` — the `.twaps/<vault>-<start>.env` file printed by `/twap-sell` or `/twap-buy`
+**Usage:** `/cancel-twap [app_data]`
+
+- `[app_data]` — the schedule id (`APP_DATA` printed by `/twap-sell` / `/twap-buy`). Omitted: list the
+  vault's schedules and ask which.
 
 Arguments: $ARGUMENTS
 
-If missing, list the files in `.twaps/` and stop with usage.
-
----
-
-The schedule signature authorises every part, and each posted part carries it publicly, so deleting
-the file is **not** a cancel — anyone could still post a future part. Part UIDs are deterministic, so
-the skill computes the UID of every part whose window has not closed and invalidates them all on the
-CoW settlement contract with the vault's `cancelIntentOrders`, in one transaction. Funds never left the
-vault, so there is nothing to return.
+Run every command from the repo root.
 
 ---
 
 ## Steps
 
-### 1. Check environment and resolve the intent protocol
+### 1. Preflight — needs the `INTENT` permission (bit 8)
 
 ```bash
-: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
-source <schedule_file>
-GUARD=$(cast call $VAULT "guard()(address)" --rpc-url "<rpc_url>")
-for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
-  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 4 ] && INTENT_PROTOCOL=$p
-done
+bin/bitty preflight 8
 ```
 
-### 2. Compute the live part UIDs
+If it prints an `Error:`, show it and stop.
+
+### 2. Choose the schedule
 
 ```bash
-UIDS=$(RPC_URL="<rpc_url>" ./scripts/cow.sh twap-uids <schedule_file>)
+bin/bitty twaps
 ```
 
-If `UIDS` is `[]`, every part has expired: tell the user there is nothing to cancel and stop.
+It prints JSON: `data[]` with `appData`, `side`, `status`, `startTime`, `partDuration`, `parts`,
+`lastPostedPart`, `windowEnd`. Without an argument, list the `active` ones and ask which. Stop if the
+chosen one is not in the list (`Error: no TWAP <app_data> for this vault.`).
 
-### 3. Confirm
+If its `windowEnd` is in the past, every part has already expired — only step 5 (marking it
+cancelled) is useful; skip the transaction.
 
-Print the schedule (sell/buy tokens, per-part amounts, interval, parts) and how many UIDs will be
-invalidated. Ask: "Cancel this TWAP? (yes/no)"
-
-### 4. Cancel on-chain
+### 3. Compute every part's UID
 
 ```bash
-cast send $VAULT "cancelIntentOrders(address,bytes[])" \
-  $INTENT_PROTOCOL "$UIDS" \
-  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
+bin/bitty twap-uids <app_data>
 ```
 
-### 5. Show result
+One UID per line, part 0 first. It rebuilds them from a part CoW already holds, so it fails if no
+part was ever posted — then there is nothing to invalidate on chain: skip to step 5.
 
-Rename the file to `<schedule_file>.cancelled` so `/post-twap-part` is not run on it again, and print:
+Drop the UIDs of parts whose slot has already ended (part `i` ends at `startTime + (i+1)·partDuration`)
+— they can no longer fill, and leaving them out keeps the transaction small.
+
+### 4. Preview, confirm and send
+
 ```
-TWAP cancelled!
-  Tx           : https://sepolia.etherscan.io/tx/<tx_hash>
-  Invalidated  : <count> part order(s)
+Cancel TWAP
+  Vault     : <vault>
+  Schedule  : <app_data> (<side>, <parts> parts every <partDuration>s)
+  Parts     : <n> still open or to come — invalidated on chain
+```
+
+Ask: "Cancel this TWAP? (yes/no)". Stop on anything but yes.
+
+```bash
+bin/bitty cancel <uid> [<uid> …]
+```
+
+On a revert, show the reason and stop — do NOT mark it cancelled in step 5 if the on-chain step
+failed, or the remaining parts stay fillable while the app shows the TWAP as gone.
+
+### 5. Stop the Bitty API
+
+```bash
+bin/bitty twap-stop <app_data>
+```
+
+### 6. Result
+
+```
+TWAP cancelled.
+  Tx       : <hash and explorer link, or "none needed">
+  Schedule : marked cancelled — no further parts will be posted
 ```

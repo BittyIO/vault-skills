@@ -1,82 +1,90 @@
-Place a gasless CoW Swap limit buy order from a BittyVault on Sepolia: receive exactly `buy_amount`, spending at most `sell_amount_max`.
+Place a CoW Swap limit BUY order for a BittyVault: receive exactly `buy_amount`, spending at
+most `sell_amount_max`, filled by CoW solvers off-chain. Gasless to place — the asset manager signs the order; no transaction unless the CoW relayer first needs an allowance on the sell token.
 
-**Usage:** `/limit-buy <from_asset> <to_asset> <buy_amount> <sell_amount_max> [valid_duration]`
+**Usage:** `/limit-buy <from_asset> <to_asset> <buy_amount> <sell_amount_max> [valid_for]`
 
-- `<from_asset>` — token to spend: symbol (WETH, WBTC, USDT, USDC) or raw `0x…`
+- `<from_asset>` — token to spend: symbol (WETH, WBTC, USDC, USDT) or raw `0x…`
 - `<to_asset>` — token to receive: symbol or raw `0x…`
 - `<buy_amount>` — exact amount to receive (human-readable)
-- `<sell_amount_max>` — maximum amount to spend
-- `[valid_duration]` — `1h`, `6h`, `24h` (default), `7d`
+- `<sell_amount_max>` — the most you spend for it, before the 0.2% fee
+- `[valid_for]` — `1h`, `6h`, `24h` (default), `7d`
 
 Arguments: $ARGUMENTS
 
-If the first 4 are missing, stop and print usage.
+Parse `$ARGUMENTS` as: from_asset, to_asset, buy_amount, sell_amount_max, optional valid_for. If any
+of the first four is missing, stop and print the usage line.
 
----
-
-Same mechanism as `/limit-sell` — signed off-chain by the asset manager, posted with
-`signingScheme: eip1271`, validated by the vault's CoW clone at settlement — with `kind: buy`. The
-vault must hold the full `sell_amount_max` for the order to validate.
-
-## Sepolia tokens
-
-| Symbol | Address | Decimals |
-|--------|---------|----------|
-| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
-| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
-| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
-| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
+Run every command from the repo root.
 
 ---
 
 ## Steps
 
-### 1. Check environment
+### 1. Preflight — needs the `INTENT` permission (bit 8)
 
 ```bash
-: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
-: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+bin/bitty preflight 8
 ```
 
-### 2. Resolve tokens, amounts and expiry
+If it prints an `Error:`, show it and stop. Otherwise show its summary.
 
-Convert `<buy_amount>` → `<buy_raw>` (to-token decimals) and `<sell_amount_max>` → `<sell_raw>`
-(from-token decimals). Check the vault's from-token `balanceOf` covers `<sell_raw>`; stop if not.
+### 2. Resolve both assets and the amounts
 
 ```bash
-VALID_TO=$(( $(date +%s) + <seconds> ))   # 1h 3600 · 6h 21600 · 24h 86400 · 7d 604800
+bin/bitty token <from_asset>
+bin/bitty token <to_asset>
+bin/bitty balance <from_address>
+bin/bitty call "isAssetAllowed(address)(bool)" <to_address>
+```
+
+- `bin/bitty raw <buy_amount> <to_decimals>` → `<buy_raw>`
+- `bin/bitty raw <sell_amount_max> <from_decimals>` → `<sell_max_raw>`
+
+The 0.2% partner fee is added to what is spent, so the order may spend the cap plus the fee:
+
+```bash
+python3 -c 'print(<sell_max_raw> * 10020 // 10000)'    # → <sell_raw>
+```
+
+Stop if the tokens are the same, an amount is 0, `<sell_raw>` exceeds the wallet balance (the vault
+must cover the whole cap for CoW to accept the order), or the buy token is not allowed.
+
+Expiry: `valid_for` in seconds (`1h`=3600, `6h`=21600, `24h`=86400, `7d`=604800) added to now:
+
+```bash
+python3 -c 'import time; print(int(time.time()) + <seconds>)'   # → <valid_to>
 ```
 
 ### 3. Preview and confirm
 
 ```
-CoW limit BUY (gasless)
-Vault       : $VAULT_ADDRESS
-Buy         : <buy_amount> <to> (<buy_raw> raw)
-Spend (max) : <sell_amount_max> <from> (<sell_raw> raw)
-Valid until : <date of VALID_TO>
+Limit buy (CoW)
+  Vault      : <vault>
+  Receive    : <buy_amount> <to_symbol>  (<buy_raw> raw)
+  Spend ≤    : <sell_amount_max> <from_symbol> before fee, <human of sell_raw> with the 0.2% fee
+  Price ≤    : <sell_amount_max / buy_amount> <from_symbol> per <to_symbol>
+  Valid until: <valid_to as a local date>
 ```
 
-Ask: "Sign and post this order? (yes/no)"
+If the CoW relayer does not yet have an allowance for `<from_symbol>`, say that a one-off
+`approveIntentSpender` transaction is sent first. Ask: "Place order? (yes/no)". Stop on anything
+but yes.
 
 ### 4. Sign and post
 
 ```bash
-RPC_URL="<rpc_url>" ./scripts/cow.sh limit $VAULT_ADDRESS \
-  <from_address> <to_address> <sell_raw> <buy_raw> $VALID_TO buy
+bin/bitty limit buy <from_address> <to_address> <sell_raw> <buy_raw> <valid_to>
 ```
 
-See `/limit-sell` step 4 for the script's error messages.
+It approves the relayer when needed, registers the fee-bearing appData, signs the order with the
+asset manager's key, posts it as an `eip1271` order from the vault, and prints the order UID. On an
+`Error:`, show it and stop.
 
-### 5. Show result
+### 5. Result
 
 ```
-Limit buy posted!
-  Order UID   : <UID>
-  Explorer    : <EXPLORER>
-  Buy         : <buy_amount> <to>
-  Spend (max) : <sell_amount_max> <from>
-  Expires     : <date>
-
-Cancel with /cancel-order <UID>
+Limit buy placed.
+  Order UID : <uid>
+  Explorer  : <COW_EXPLORER from bin/bitty env><uid>
+  Cancel    : /cancel-order <uid>
 ```

@@ -1,68 +1,80 @@
-Fund a BittyVault with WETH by sending ETH from the asset manager wallet on Sepolia.
+Fund a BittyVault by sending ETH from the asset manager's wallet. The vault wraps it into WETH on
+arrival.
 
 **Usage:** `/fund-vault [eth_amount]`
 
-- `[eth_amount]` — ETH to send (default: `0.01`)
+- `[eth_amount]` — ETH to send (default `0.01`)
 
 Arguments: $ARGUMENTS
 
+Run every command from the repo root.
+
 ---
 
-The vault's `receive()` wraps incoming ETH into its WETH (`0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9`)
-on arrival, so a plain ETH transfer is all funding takes. Funding never deposits anywhere by itself: an
-auto-yield route the owner set is swept later by the auto-yield keeper, not on arrival.
-
-Any other token is funded with an ordinary ERC-20 `transfer` to the vault address.
+Funding never deposits anywhere by itself: an auto-yield route the owner set is swept later by the
+keeper, not on arrival. Any other token is funded with an ordinary ERC-20 `transfer` to the vault.
 
 ---
 
 ## Steps
 
-### 1. Check environment variables
+### 1. Who pays
 
 ```bash
-: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
-: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
-ASSET_MANAGER=$(cast wallet address --private-key "$PRIVATE_KEY")
-WETH=0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9
+bin/bitty env                                          # NETWORK, VAULT_ADDRESS
+bin/bitty me                                           # → <payer>, the asset manager's address
+bin/bitty role                                         # must not be "owner"
+bin/bitty token WETH                                   # → <weth> 18 WETH
 ```
 
-### 2. Check the asset manager's ETH balance
+- `VAULT_ADDRESS=<unset>` → stop: `Error: no vault yet — run /deploy-vault first.`
+- `bin/bitty me` errors → stop: no key yet, run `/new-assetmanager` first.
+- `role` prints `owner` → stop: the owner's key must never be used here.
+
+No preflight: funding works before the manager's grant is in force.
+
+### 2. Enough ETH?
 
 ```bash
-cast balance $ASSET_MANAGER --ether --rpc-url "<rpc_url>"
+bin/bitty cast balance <payer> --ether
 ```
 
-If it is below `<eth_amount> + 0.005` (gas headroom), stop:
+Below `<eth_amount> + 0.005` (gas headroom) → stop:
 ```
-Error: asset manager <ASSET_MANAGER> holds <balance> ETH; needs <eth_amount> plus gas.
-Get Sepolia ETH from https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+Error: <payer> holds <balance> ETH; it needs <eth_amount> plus gas.
 ```
+On Sepolia, add: `Get Sepolia ETH from https://cloud.google.com/application/web3/faucet/ethereum/sepolia`.
+On mainnet, say this is real ETH.
 
 ### 3. Preview and confirm
 
 ```bash
-WETH_BEFORE=$(cast call $WETH "balanceOf(address)(uint256)" $VAULT_ADDRESS --rpc-url "<rpc_url>")
+bin/bitty balance <weth>                               # the vault's WETH before
 ```
 
-Print the vault, the amount and the vault's current WETH balance. Ask: "Send <eth_amount> ETH to the vault? (yes/no)"
+```
+Fund vault
+  Vault : <vault>
+  Send  : <eth_amount> ETH from <payer>, wrapped to WETH by the vault
+```
+
+Ask: `Send <eth_amount> ETH to the vault? (yes/no)`. Stop on anything but yes.
 
 ### 4. Send
 
 ```bash
-cast send $VAULT_ADDRESS --value <eth_amount>ether \
-  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
+bin/bitty send --value <eth_amount>ether
 ```
 
-### 5. Show result
+### 5. Result
 
 ```bash
-cast call $WETH "balanceOf(address)(uint256)" $VAULT_ADDRESS --rpc-url "<rpc_url>"
+bin/bitty balance <weth>
 ```
 
 ```
 Vault funded!
-  Tx           : https://sepolia.etherscan.io/tx/<tx_hash>
-  Sent         : <eth_amount> ETH (wrapped to WETH by the vault)
-  Vault WETH   : <before> → <after> (wei)
+  Tx         : <hash and explorer link>
+  Sent       : <eth_amount> ETH (wrapped to WETH)
+  Vault WETH : <before> → <after>   (bin/bitty human <raw> 18)
 ```

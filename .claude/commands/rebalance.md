@@ -1,105 +1,108 @@
-Swap one asset for another inside a BittyVault at market, via the Uniswap Universal Router on Sepolia.
+Swap one asset for another inside a BittyVault at market, through the Uniswap Universal
+Router adapter. The route (Uniswap v3/v4, best of the pools) is built by the Bitty API.
 
-**Usage:** `/rebalance <from_asset> <to_asset> <sell_amount> [slippage_bps]`
+**Usage:** `/rebalance <from_asset> <to_asset> <sell_amount|max> [slippage_bps]`
 
-- `<from_asset>` — token to sell: symbol (WETH, USDT, USDC) or raw `0x…`
+- `<from_asset>` — token to sell: symbol (WETH, WBTC, USDC, USDT) or raw `0x…`
 - `<to_asset>` — token to buy: symbol or raw `0x…`
-- `<sell_amount>` — human-readable amount to sell (e.g. `0.01`)
-- `[slippage_bps]` — tolerated slippage below the quote, in basis points (default `100` = 1%)
+- `<sell_amount>` — human-readable amount to sell, or `max` for the whole wallet balance
+- `[slippage_bps]` — slippage tolerance in basis points, default `50` (0.5%), at most `500`
 
 Arguments: $ARGUMENTS
 
-Parse `$ARGUMENTS` as: from_asset, to_asset, sell_amount, optional slippage_bps.
-If the first 3 are missing, stop and print usage.
+Parse `$ARGUMENTS` as: from_asset, to_asset, sell_amount, optional slippage_bps. If any of the
+first three is missing, stop and print the usage line.
 
----
-
-## Sepolia tokens
-
-| Symbol | Address | Decimals | Market-tradeable |
-|--------|---------|----------|------------------|
-| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 | yes |
-| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 | yes |
-| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 | yes |
-| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 | no — use `/limit-sell` |
-
-A market trade needs both tokens to carry the guard's AMM-liquid flag (`assetCategory & 4`); otherwise
-the vault reverts with `MarketTradeNotSupported`.
-
-The route is quoted by Bitty's public routing API, which searches Uniswap v2/v3/v4 pools and returns a
-route encoded for the vault's trade adapter (on Sepolia only v4 pools are executable). The adapter
-takes a 0.2% fee — from the input when selling a stablecoin, otherwise from the output — and the
-quote's `minReceive` already accounts for it.
+Run every command from the repo root.
 
 ---
 
 ## Steps
 
-### 1. Check environment and resolve the market-trade protocol
+### 1. Preflight — needs the `MARKET_TRADE` permission (bit 4)
 
 ```bash
-: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
-: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
-GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
-for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
-  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 3 ] && MARKET_PROTOCOL=$p
-done
+bin/bitty preflight 4
 ```
 
-### 2. Resolve tokens and amount, check balance
+If it prints an `Error:`, show it and stop. Otherwise show its summary.
 
-Resolve both tokens (table above, or `decimals()(uint8)` for raw addresses). Convert `<sell_amount>` to
-`<sell_raw>`. Check `balanceOf(vault)` of the from-token; stop if short.
-
-### 3. Get a route
+### 2. Resolve both assets and the amount
 
 ```bash
-QUOTE=$(curl -s "https://bitty.io/api/ethereum/trade/route?network=sepolia&version=v2&tokenIn=<from_address>&tokenOut=<to_address>&amountIn=<sell_raw>&slippageBps=<slippage_bps>")
-echo "$QUOTE" | python3 -c 'import json,sys; q=json.load(sys.stdin); print({k:v for k,v in q.items() if k!="route"})'
-ROUTE=$(echo "$QUOTE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["route"] or "")')
-MIN_RECEIVE=$(echo "$QUOTE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["minReceive"])')
+bin/bitty token <from_asset>
+bin/bitty token <to_asset>
+bin/bitty balance <from_address>
 ```
 
-If `route` is null, stop: "No Uniswap route for <from> → <to> on Sepolia." The route expires at
-`deadline` (30 minutes) — re-quote if the user takes longer to confirm.
+- `max` → the wallet balance; otherwise `bin/bitty raw <sell_amount> <from_decimals>`.
+- Stop if the two tokens are the same, the amount is 0, or it exceeds the wallet balance.
+- Stop if `slippage_bps` is not an integer from 0 to 500. (The vault itself refuses any trade that
+  comes out more than 5% below oracle value.)
 
-### 4. Preview and confirm
-
-```
-Vault        : $VAULT_ADDRESS
-Sell         : <sell_amount> <from> (<sell_raw> raw)
-Expected     : <receive> <to> (raw, after the 0.2% fee)
-Minimum      : <minReceive> <to> (raw)
-Route        : <hops joined with " → ">
-```
-
-Ask: "Proceed with swap? (yes/no)"
-
-### 5. marketSell
+### 3. Pick the market-trade protocol
 
 ```bash
-cast send $VAULT_ADDRESS \
-  "marketSell(address,address,uint256,address,uint256,bytes)" \
-  $MARKET_PROTOCOL <from_address> <sell_raw> <to_address> $MIN_RECEIVE "$ROUTE" \
-  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
+bin/bitty protocols trade
 ```
 
-On revert:
-- `InsufficientOutput` — price moved past the slippage; re-quote.
-- `MarketTradePriceTooLow` / `MarketTradeExceedsDailyLossAllowance` — market-trade protection is on
-  (new vaults start with a $10,000/day `marketTradeDailyLossAllowance`): every trade must come out
-  within 5% of Chainlink value, and what it comes out short is charged to the day's budget. Sepolia
-  test pools are badly mispriced, so the direction the pool underprices reverts; the other direction
-  passes. `PriceStale` means the token's Chainlink feed has not updated recently.
-- `OwnableUnauthorizedAccount` — this key lacks `PERM_MARKET_TRADE` or its grant has expired.
+None → stop: `Error: no market-trade protocol is open to this vault on <network>.` Several → ask.
 
-### 6. Show result
+### 4. Quote a route
 
-Re-read both token balances of the vault and print:
+```bash
+bin/bitty route <from_address> <to_address> <sell_amount_raw> <slippage_bps>
 ```
-Swap successful!
-  Tx         : https://sepolia.etherscan.io/tx/<tx_hash>
-  Sold       : <sell_amount> <from>
-  <from> bal : <after> (raw)
-  <to> bal   : <before> → <after> (raw)
+
+It prints JSON. Stop with the reason when it has `"error"`, or when `"route"` is `null`
+(`Error: no Uniswap route for <from> → <to> at this size.`). Otherwise keep:
+- `route` — the Universal Router route, passed to the vault as-is
+- `receive` — expected amount to land in the vault, after the 0.2% swap fee
+- `minReceive` — the floor: the swap reverts below it
+- `hops` — for display
+
+### 5. Preview and confirm
+
+```
+Market sell
+  Vault        : <vault>
+  Sell         : <sell_amount> <from_symbol>  (<sell_amount_raw> raw)
+  Expect       : <receive, human> <to_symbol>
+  At least     : <minReceive, human> <to_symbol>   (slippage <slippage_bps/100>%)
+  Route        : <hops joined with " → ">
+  Protocol     : <name> (<protocol>)
+  Fee          : 0.2% (from the input when it is a stable coin, otherwise from the output)
+```
+
+Ask: "Swap? (yes/no)". Stop on anything but yes. The route expires (its `deadline`), so if the user
+waits more than a few minutes, quote again.
+
+### 6. Send
+
+```bash
+bin/bitty send "marketSell(address,address,uint256,address,uint256,bytes)" \
+  <protocol> <from_address> <sell_amount_raw> <to_address> <minReceive> <route>
+```
+
+On a revert, show the reason and stop. Common ones:
+- `InsufficientOutput` — the price moved past the slippage; quote again or allow more slippage.
+- `MarketTradePriceTooLow` — the fill was more than 5% under oracle value; the vault refuses it.
+- `MarketTradeExceedsDailyLossAllowance` — today's trading loss would pass the owner's daily
+  loss allowance (at 0, market trading is off); try a smaller trade or wait for the day to clear.
+- `MarketTradeNotSupported` — one of the tokens is not tradable at market on this guard.
+- `NotRegistered` / `InvalidMarketTradeProtocol` — a token or the protocol is not on the vault's
+  allow list.
+
+### 7. Result
+
+```bash
+bin/bitty balance <from_address>
+bin/bitty balance <to_address>
+```
+
+```
+Swapped <sell_amount> <from_symbol> → <to_symbol>.
+  Tx                : <hash and explorer link>
+  <from_symbol> now : <human>
+  <to_symbol> now   : <human>
 ```

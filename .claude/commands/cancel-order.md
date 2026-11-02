@@ -1,60 +1,72 @@
-Cancel a CoW Swap limit order of a BittyVault on Sepolia.
+Cancel CoW limit orders of a BittyVault. Cancellation is ON-CHAIN: CoW's off-chain cancel
+only accepts an EOA's own signature, so the vault invalidates the order UID on the CoW settlement
+contract itself (`cancelIntentOrders`). Once invalidated, an order can never fill.
 
-**Usage:** `/cancel-order <order_uid>`
+**Usage:** `/cancel-order [order_uid …]`
 
-- `<order_uid>` — the 56-byte CoW order UID printed by `/limit-sell` or `/limit-buy`
+- `[order_uid …]` — one or more 56-byte order UIDs (`0x` + 112 hex). Omitted: list the vault's open
+  orders and ask which to cancel.
 
 Arguments: $ARGUMENTS
 
-If missing, stop and print usage.
-
----
-
-CoW's API cannot soft-cancel an eip1271 order, so the vault invalidates the UID on the CoW settlement
-contract itself with `cancelIntentOrder` — one on-chain transaction, after which the order can never
-settle. Any live asset manager may cancel (no permission bit needed). An order that is already filled
-or expired needs no cancel.
+Run every command from the repo root.
 
 ---
 
 ## Steps
 
-### 1. Check environment and resolve the intent protocol
+### 1. Preflight — needs the `INTENT` permission (bit 8)
+
+A locked vault refuses cancellations.
 
 ```bash
-: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
-: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
-GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
-for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
-  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 4 ] && INTENT_PROTOCOL=$p
-done
+bin/bitty preflight 8
 ```
 
-### 2. Look up the order
+If it prints an `Error:`, show it and stop.
+
+### 2. Choose the orders
 
 ```bash
-curl -s "https://api.cow.fi/sepolia/api/v1/orders/<order_uid>"
+bin/bitty orders
 ```
 
-Check `owner` is `$VAULT_ADDRESS` (stop otherwise) and show `status`, sell/buy tokens and amounts,
-`validTo`. If `status` is `fulfilled`, `expired` or `cancelled`, stop: nothing to cancel.
+- No UIDs given → show the list and ask which to cancel (or "all"). `No open orders.` → stop.
+- UIDs given → each must match `^0x[0-9a-fA-F]{112}$`; stop on one that does not. A UID that is not
+  in the open list may already be filled, expired or cancelled — say so and ask whether to
+  invalidate it anyway.
+- A `twap-part` order belongs to a TWAP: cancelling the part does not stop the schedule. Point the
+  user at `/cancel-twap <appData>` for that.
 
-### 3. Confirm
+### 3. Preview and confirm
 
-Ask: "Cancel order <order_uid>? (yes/no)"
+```
+Cancel CoW orders
+  Vault  : <vault>
+  Orders : <uid> (<kind>, sell <amount> <token> → buy <amount> <token>)
+           …
+```
 
-### 4. Cancel on-chain
+Ask: "Cancel? (yes/no)". Stop on anything but yes.
+
+### 4. Send
 
 ```bash
-cast send $VAULT_ADDRESS "cancelIntentOrder(address,bytes)" \
-  $INTENT_PROTOCOL <order_uid> \
-  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
+bin/bitty cancel <uid> [<uid> …]
 ```
 
-### 5. Show result
+On a revert, show the reason and stop (`InvalidIntentProtocol` — no CoW protocol is open to the
+vault any more).
+
+### 5. Result
+
+```bash
+bin/bitty orders
+```
 
 ```
-Order cancelled!
-  Tx       : https://sepolia.etherscan.io/tx/<tx_hash>
-  Order    : https://explorer.cow.fi/sepolia/orders/<order_uid>
+Cancelled <n> order(s).
+  Tx : <hash and explorer link>
 ```
+
+The CoW explorer may show an order as open for a minute before it notices the invalidation.

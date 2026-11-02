@@ -1,81 +1,88 @@
-Show the vault's assets — wallet balance, supplied to Aave, staked in Lido — plus its asset manager and risk settings.
+Show a BittyVault: your role, the vault's wallet balances, what it has in
+lending and staking protocols, pending withdrawals, and open CoW orders. Read-only.
 
 **Usage:** `/vault-balances`
 
-No arguments needed. Reads `$VAULT_ADDRESS` from env.
+No arguments. Reads `VAULT_ADDRESS` from the network's `.env`.
 
----
-
-## Sepolia tokens
-
-| Symbol | Address | Decimals |
-|--------|---------|----------|
-| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
-| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
-| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
-| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
-| stETH | `0x3e3FE7dBc6B4C189E7128855dD526361c49b40Af` | 18 |
+Run every command from the repo root.
 
 ---
 
 ## Steps
 
-### 1. Check environment and resolve protocols
+### 1. Role
 
 ```bash
-: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
-GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
-for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
-  case "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" in
-    1) STAKING_PROTOCOL=$p ;; 2) LENDING_PROTOCOL=$p ;;
-  esac
-done
+bin/bitty role                               # manager <perms> <expiresAt> | none
+bin/bitty call "lockLevel()(uint8)"
 ```
+
+- An `Error:` about the vault itself (not set, no contract) → show it and stop.
+- `owner` → stop. Tell the user the vault owner's key must never be used here: remove it from the
+  network's `.env`, put the asset manager's key instead, and do owner tasks in the Bitty app.
+- `none` → say the key is not the vault's live asset manager, and carry on: balances are public.
 
 ### 2. Wallet balances
 
-For each token in the table:
-```bash
-cast call <token> "balanceOf(address)(uint256)" $VAULT_ADDRESS --rpc-url "<rpc_url>"
-```
-Also the vault's raw ETH: `cast balance $VAULT_ADDRESS --rpc-url "<rpc_url>"` (normally 0 — incoming ETH
-is wrapped; anyone can call `wrapNative()` to wrap a leftover).
-
-### 3. Protocol positions
+For each token of the network — `bin/bitty token WETH`, `WBTC`, `USDC`, `USDT` — read:
 
 ```bash
-cast call $VAULT_ADDRESS "getBalances(address[],address[])(uint256[])" \
-  "[$LENDING_PROTOCOL,$LENDING_PROTOCOL,$LENDING_PROTOCOL,$LENDING_PROTOCOL,$STAKING_PROTOCOL]" \
-  "[0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9,0x29f2D40B0605204364af54EC677bD022dA425d03,0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0,0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238,0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9]" \
-  --rpc-url "<rpc_url>"
-cast call $VAULT_ADDRESS "getPendingWithdrawalIds(address)(uint256[])" $STAKING_PROTOCOL --rpc-url "<rpc_url>"
+bin/bitty balance <address>
+bin/bitty call "isAssetAllowed(address)(bool)" <address>
 ```
 
-If the batched call reverts (an asset the adapter does not know), query each pair on its own and show
-the ones that answer.
+Native ETH too (18 decimals): `bin/bitty balance ETH`. Protocols take WETH, not native ETH, so show
+it apart and, when it is non-zero, mention that anyone may wrap it into WETH with
+`bin/bitty send "wrapNative()"` (after the user confirms).
 
-### 4. Vault state
+### 3. Positions
 
 ```bash
-cast call $VAULT_ADDRESS "owner()(address)" --rpc-url "<rpc_url>"
-cast call $VAULT_ADDRESS "getAssetManagerSettings()(address,uint64,address,uint64,uint32,uint32)" --rpc-url "<rpc_url>"
-cast call $VAULT_ADDRESS "riskSettings()(uint64,uint64,uint64)" --rpc-url "<rpc_url>"
-cast call $VAULT_ADDRESS "lockLevel()(uint8)" --rpc-url "<rpc_url>"
+bin/bitty protocols lending held
+bin/bitty protocols staking held
+```
+
+For each held protocol, read the position in each token it can hold — Lido: WETH; Sky: USDC;
+Aave: every token above:
+
+```bash
+bin/bitty position <protocol> <token address>
+```
+
+And pending withdrawals:
+
+```bash
+bin/bitty pending <protocol>
+```
+
+### 4. Open orders
+
+```bash
+bin/bitty orders
 ```
 
 ### 5. Print
 
-Format amounts with each token's decimals and skip zero rows:
+Convert every raw amount with `bin/bitty human <raw> <decimals>` and skip zero rows.
+
 ```
-Vault <VAULT_ADDRESS> (Sepolia)  — https://sepolia.etherscan.io/address/<VAULT_ADDRESS>
+Vault <vault> on <network>
+  You         : <asset manager — permissions <…>, expires <date> | not the asset manager>
+  Lock        : <unlocked | level N>
 
-Asset   Wallet        Aave         Lido (stETH)
-WETH    0.0100        —            0.0050
-USDT    12.50         5.00         —
+Wallet
+  WETH   <amount>        (allowed)
+  USDC   <amount>        (not on the allow list)
+  ETH    <amount>        (native — wrap before use)
 
-Pending Lido requests : <ids or none>
-Owner                 : <owner>
-Asset manager         : <manager>, expires <date>, permissions <mask> (<names>)  [pending: <manager> at <date>]
-Risk                  : timelock <s>s · send allowance <usd or none>/day · market-trade loss allowance <usd or off>/day
-Lock                  : unlocked | emergency locked | locked forever
+Lending
+  Aave-v3  WETH  <amount>
+
+Staking
+  Lido     WETH  <amount>     pending withdrawals: <ids or none>
+  Sky      USDC  <amount>
+
+Open CoW orders
+  <lines from bin/bitty orders, or "none">
 ```

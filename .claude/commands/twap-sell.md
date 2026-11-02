@@ -1,87 +1,84 @@
-Create a gasless CoW Swap TWAP sell on a BittyVault on Sepolia: the total is split into `n_parts` equal sells, one per `interval`.
+Create a CoW Swap TWAP sell for a BittyVault: sell `total_sell` in `n_parts` equal parts,
+one every `interval`, each receiving at least `min_per_part`. Gasless — the asset manager signs the whole schedule ONCE; part 0 is posted now and the Bitty API posts each later part as its slot opens.
 
 **Usage:** `/twap-sell <from_asset> <to_asset> <total_sell> <min_per_part> <n_parts> <interval>`
 
-- `<from_asset>` — token to sell: symbol (WETH, WBTC, USDT, USDC) or `0x…`
-- `<to_asset>` — token to receive: symbol or `0x…`
-- `<total_sell>` — total amount to sell across all parts (human-readable)
-- `<min_per_part>` — minimum receive amount per part (price floor per slot)
-- `<n_parts>` — number of parts (e.g. `7`)
-- `<interval>` — seconds per part (e.g. `3600` hourly, `86400` daily)
+- `<from_asset>` — token to sell: symbol (WETH, WBTC, USDC, USDT) or raw `0x…`
+- `<to_asset>` — token to receive: symbol or raw `0x…`
+- `<total_sell>` — total to sell across all parts (human-readable)
+- `<min_per_part>` — the least each part accepts, before the 0.2% fee
+- `<n_parts>` — number of parts (2 or more)
+- `<interval>` — time between parts: seconds, or `15m`, `1h`, `1d` …  (at least 5 minutes)
+
+Each part can fill only inside its own slot: part `i` opens at `start + i·interval` and expires at
+`start + (i+1)·interval`. A part that does not fill in its slot is skipped, not carried over.
 
 Arguments: $ARGUMENTS
 
-If any are missing, stop and print usage.
+Parse `$ARGUMENTS` as the six values above. If any is missing, stop and print the usage line.
 
----
-
-## How it works
-
-The asset manager signs the **whole schedule once** (an EIP-712 `TwapOrder`). Part `i` is a
-fill-or-kill sell of `total_sell / n_parts`, valid until `start + (i+1) × interval`, and the vault's
-CoW clone rebuilds it from the schedule to validate it — so every part reuses the one signature.
-Nothing is placed on-chain except a one-time `approveIntentRelayer` for the sell token.
-
-Each part must be **posted** to CoW when its window opens. This skill posts part 1; run
-`/post-twap-part <schedule_file>` at each later interval (or schedule it with `/loop <interval>s
-/post-twap-part <schedule_file>`). The schedule and signature are kept in `.twaps/` (git-ignored).
-
-## Sepolia tokens
-
-| Symbol | Address | Decimals |
-|--------|---------|----------|
-| WETH | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` | 18 |
-| WBTC | `0x29f2D40B0605204364af54EC677bD022dA425d03` | 8 |
-| USDT | `0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0` | 6 |
-| USDC | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
+Run every command from the repo root.
 
 ---
 
 ## Steps
 
-### 1. Check environment
+### 1. Preflight — needs the `INTENT` permission (bit 8)
 
 ```bash
-: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
-: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
+bin/bitty preflight 8
 ```
 
-### 2. Resolve amounts
+If it prints an `Error:`, show it and stop. Otherwise show its summary.
 
-`<sell_per_part_raw>` = raw `<total_sell>` ÷ `<n_parts>` (integer, from-token decimals);
-`<min_per_part_raw>` = raw `<min_per_part>` (to-token decimals). The vault must hold at least one
-part's sell amount whenever a part settles; check `balanceOf` covers the total and warn if not.
+### 2. Resolve and size the schedule
+
+```bash
+bin/bitty token <from_asset>
+bin/bitty token <to_asset>
+bin/bitty balance <from_address>
+bin/bitty call "isAssetAllowed(address)(bool)" <to_address>
+```
+
+- `<interval>` → seconds (`<duration>`); stop if under 300.
+- `bin/bitty raw <total_sell> <from_decimals>` → `<total_raw>`;
+  `<sell_per_part> = <total_raw> // <n_parts>` (the remainder stays in the vault).
+- `bin/bitty raw <min_per_part> <to_decimals>` → `<min_raw>`; the fee comes out of what is bought:
+  `<buy_per_part> = <min_raw> * 9980 // 10000`.
+- Stop if `<n_parts>` < 2, an amount is 0, the tokens are the same, the buy token is not allowed, or
+  `<sell_per_part> * <n_parts>` exceeds the wallet balance. (Each part is checked against the
+  balance when it settles, so the vault must keep enough for the parts still to come.)
 
 ### 3. Preview and confirm
 
 ```
-CoW TWAP SELL (gasless)
-Vault         : $VAULT_ADDRESS
-Total sell    : <total_sell> <from> in <n_parts> parts
-Per part      : <sell_per_part> <from> → at least <min_per_part> <to>
-Interval      : <interval>s  (ends <date of now + n_parts × interval>)
+TWAP sell (CoW)
+  Vault       : <vault>
+  Sell        : <human of sell_per_part> <from_symbol> × <n_parts> = <human total> <from_symbol>
+  Each part ≥ : <min_per_part> <to_symbol> before fee, <human of buy_per_part> after the 0.2% fee
+  Every       : <interval>, the last part expiring <n_parts × interval> from now
 ```
 
-Ask: "Sign the schedule and post part 1? (yes/no)"
+If the CoW relayer has no allowance for `<from_symbol>` yet, say a one-off `approveIntentSpender`
+transaction is sent first. Ask: "Start TWAP? (yes/no)". Stop on anything but yes.
 
-### 4. Sign the schedule and post part 1
+### 4. Sign, post part 0, schedule the rest
 
 ```bash
-RPC_URL="<rpc_url>" ./scripts/cow.sh twap-new $VAULT_ADDRESS \
-  <from_address> <to_address> <sell_per_part_raw> <min_per_part_raw> <n_parts> <interval>
+bin/bitty twap <from_address> <to_address> <sell_per_part> <buy_per_part> <duration> <n_parts> sell
 ```
 
-It prints `FILE=` (the schedule), then `PART=`, `UID=`, `VALID_TO=`, `EXPLORER=`. Errors are as in
-`/limit-sell` step 4.
+It prints `APP_DATA=…` (the schedule's id), `START=…`, `PART0_UID=…` and `SCHEDULED=…`. On an
+`Error:`, show it and stop. If `SCHEDULED=no`, the Bitty API did not take the schedule: only part 0 is
+live and no later part will be posted. The output then lists every part as `PART_UID=…`; tell the
+user to cancel them all with `/cancel-order <uid> …` (the schedule's signature is public in part 0,
+so anyone could post a later part) and to try again.
 
-### 5. Show result
+### 5. Result
 
 ```
-TWAP created!
-  Schedule  : <FILE>
-  Part 1/<n> : <UID>  (valid until <date of VALID_TO>)
-  Explorer  : <EXPLORER>
-
-Post later parts: /post-twap-part <FILE>
-Cancel:           /cancel-twap <FILE>
+TWAP started — <n_parts> parts, one every <interval>.
+  Schedule  : <APP_DATA>
+  Part 0    : <COW_EXPLORER from bin/bitty env><PART0_UID>
+  Cancel    : /cancel-twap <APP_DATA>
 ```

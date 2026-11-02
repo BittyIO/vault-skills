@@ -1,68 +1,93 @@
-Request an unstake from the Lido staking protocol back into a BittyVault on Sepolia.
+Unstake an asset from a staking protocol back into a BittyVault.
 
-**Usage:** `/unstake <asset> <amount>`
+- **Sky** (USDC) settles at once: the USDC is back in the vault when the transaction lands.
+- **Lido** (WETH) is two-step: this requests the withdrawal and returns request ids; once Lido
+  finalises them (usually days), run `/claim-unstaked` to receive the ETH.
 
-- `<asset>` — `WETH` (the asset that was staked)
-- `<amount>` — human-readable stETH amount (e.g. `0.5`), or `max` for the full stake
+**Usage:** `/unstake <asset> <amount|max>`
+
+- `<asset>` — `WETH` (Lido) or `USDC` (Sky), or a raw `0x…` address
+- `<amount>` — human-readable amount, or `max` for the whole staked position
 
 Arguments: $ARGUMENTS
 
-Parse `$ARGUMENTS` as two parts: asset, amount.
-If any are missing, stop and print: "Usage: /unstake <asset> <amount>"
+Parse `$ARGUMENTS` as: asset, amount. If either is missing, stop and print the usage line.
 
----
-
-Lido exits are asynchronous: this opens a withdrawal request, and the ETH arrives later with
-`/claim-unstaked` once Lido finalizes it. **On Sepolia the Lido withdrawal queue is paused**, so the
-request reverts there.
+Run every command from the repo root.
 
 ---
 
 ## Steps
 
-### 1. Check environment and resolve the staking protocol
+### 1. Preflight — needs the `YIELD` permission (bit 1)
+
+A locked vault refuses it: a lock leaves the asset manager's grant dormant until the owner
+unlocks.
 
 ```bash
-: "${PRIVATE_KEY:?PRIVATE_KEY is not set — run /new-assetmanager first}"
-: "${VAULT_ADDRESS:?VAULT_ADDRESS is not set — run /deploy-vault first}"
-WETH=0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9
-GUARD=$(cast call $VAULT_ADDRESS "guard()(address)" --rpc-url "<rpc_url>")
-for p in $(cast call $GUARD "getProtocols()(address[])" --rpc-url "<rpc_url>" | tr -d '[],'); do
-  [ "$(cast call $GUARD "protocolCategory(address)(uint8)" $p --rpc-url "<rpc_url>")" = 1 ] && STAKING_PROTOCOL=$p
-done
+bin/bitty preflight 1
 ```
 
-### 2. Read the stake and resolve the amount
+If it prints an `Error:`, show it and stop.
+
+### 2. Resolve the asset and find the position
 
 ```bash
-cast call $VAULT_ADDRESS "getBalances(address[],address[])(uint256[])" \
-  "[$STAKING_PROTOCOL]" "[$WETH]" --rpc-url "<rpc_url>"
-cast call $VAULT_ADDRESS "getPendingWithdrawalIds(address)(uint256[])" $STAKING_PROTOCOL --rpc-url "<rpc_url>"
+bin/bitty token <asset>
+bin/bitty protocols staking held
+bin/bitty position <protocol> <address>     # for each held protocol
 ```
 
-Save the first as `<staked>`; if 0, stop. `max` → `<staked>`; otherwise `cast to-unit <amount>ether wei`,
-capped by `<staked>`. Lido requires at least 100 wei per request.
+Keep the protocols with a non-zero position in this asset. None → stop:
+`Error: the vault has no <symbol> staked.` Several → ask which.
 
-### 3. Preview and confirm
+Note the pending ids before sending, to tell the new ones apart afterwards:
+```bash
+bin/bitty pending <protocol>
+```
 
-Print vault, amount, `<staked>` and the already-pending request ids.
-Ask: "Request unstake? (yes/no)"
+### 3. Amount
 
-### 4. Withdraw (opens the Lido request)
+- `max` → pass `115792089237316195423570985008687907853269984665640564039457584007913129639935`
+  (`type(uint256).max`).
+- Otherwise `bin/bitty raw <amount> <decimals>`; stop if it exceeds the position.
+
+### 4. Preview and confirm
+
+```
+Unstake
+  Vault    : <vault>
+  Asset    : <amount or "all"> <symbol>
+  From     : <name> (<protocol>), position <position, human>
+  Settles  : <"now" for Sky | "two-step — claim with /claim-unstaked after Lido finalises" for Lido>
+```
+
+On **Sepolia** with Lido, warn: the Lido withdrawal queue is paused there, so this will revert.
+
+Ask: "Unstake? (yes/no)". Stop on anything but yes.
+
+### 5. Send
 
 ```bash
-cast send $VAULT_ADDRESS "withdraw(address,address,uint256)" \
-  $STAKING_PROTOCOL $WETH <amount_raw> \
-  --rpc-url "<rpc_url>" --private-key "$PRIVATE_KEY"
+bin/bitty send "withdraw(address,address,uint256)" <protocol> <address> <amount_raw>
 ```
 
-### 5. Show result
+On a revert, show the reason and stop.
 
-Re-read both values from step 2 and print:
+### 6. Result
+
+```bash
+bin/bitty position <protocol> <address>
+bin/bitty pending <protocol>
+bin/bitty balance <address>
 ```
-Unstake requested!
-  Tx           : https://sepolia.etherscan.io/tx/<tx_hash>
-  Requested    : <amount> stETH
-  Pending ids  : <ids>
-Claim once finalized with /claim-unstaked
+
 ```
+Unstaked from <name>.
+  Tx             : <hash and explorer link>
+  Still staked   : <position, human>
+  New request ids: <ids not in the list from step 2>     (Lido only)
+  Wallet balance : <balance, human>
+```
+
+For Lido: `Run /claim-unstaked once Lido has finalised the request.`
