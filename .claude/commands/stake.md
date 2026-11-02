@@ -57,7 +57,7 @@ Stake
   Protocol : <name> (<protocol>)
 ```
 
-For Lido add: `Unstaking later is two-step: /unstake, then /claim-unstaked once Lido finalises (days).`
+For Lido add: `Unstaking later is two-step: /unstake, then /claim-withdrawals once Lido finalises (days).`
 
 Ask: "Stake? (yes/no)". Stop on anything but yes.
 

@@ -1,7 +1,7 @@
 Claim finalised staking withdrawals (Lido) into a BittyVault. Step 2 of `/unstake` for
 protocols that settle later.
 
-**Usage:** `/claim-unstaked [request_id …]`
+**Usage:** `/claim-withdrawals [request_id …]`
 
 - `[request_id …]` — optional ids to claim. Omitted: every pending id of every staking protocol
   the vault holds a position in.
@@ -71,6 +71,6 @@ bin/bitty balance <WETH address from bin/bitty token WETH>
 Claimed from <name>.
   Tx             : <hash and explorer link>
   Claimed ids    : <ids that are no longer pending>
-  Not yet final  : <ids still pending, or "none"> — run /claim-unstaked again later
+  Not yet final  : <ids still pending, or "none"> — run /claim-withdrawals again later
   WETH balance   : <human>
 ```

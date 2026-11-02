@@ -86,5 +86,5 @@ asset manager's key, posts it as an `eip1271` order from the vault, and prints t
 Limit buy placed.
   Order UID : <uid>
   Explorer  : <COW_EXPLORER from bin/bitty env><uid>
-  Cancel    : /cancel-order <uid>
+  Cancel    : /cancel-intent-order <uid>
 ```

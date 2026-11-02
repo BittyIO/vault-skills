@@ -88,5 +88,5 @@ vault refused the order — usually the balance dropped, the grant changed, or t
 Limit sell placed.
   Order UID : <uid>
   Explorer  : <COW_EXPLORER from bin/bitty env><uid>
-  Cancel    : /cancel-order <uid>
+  Cancel    : /cancel-intent-order <uid>
 ```

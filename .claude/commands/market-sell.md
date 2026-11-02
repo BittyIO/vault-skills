@@ -1,7 +1,7 @@
 Swap one asset for another inside a BittyVault at market, through the Uniswap Universal
 Router adapter. The route (Uniswap v3/v4, best of the pools) is built by the Bitty API.
 
-**Usage:** `/rebalance <from_asset> <to_asset> <sell_amount|max> [slippage_bps]`
+**Usage:** `/market-sell <from_asset> <to_asset> <sell_amount|max> [slippage_bps]`
 
 - `<from_asset>` — token to sell: symbol (WETH, WBTC, USDC, USDT) or raw `0x…`
 - `<to_asset>` — token to buy: symbol or raw `0x…`

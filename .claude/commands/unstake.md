@@ -2,7 +2,7 @@ Unstake an asset from a staking protocol back into a BittyVault.
 
 - **Sky** (USDC) settles at once: the USDC is back in the vault when the transaction lands.
 - **Lido** (WETH) is two-step: this requests the withdrawal and returns request ids; once Lido
-  finalises them (usually days), run `/claim-unstaked` to receive the ETH.
+  finalises them (usually days), run `/claim-withdrawals` to receive the ETH.
 
 **Usage:** `/unstake <asset> <amount|max>`
 
@@ -59,7 +59,7 @@ Unstake
   Vault    : <vault>
   Asset    : <amount or "all"> <symbol>
   From     : <name> (<protocol>), position <position, human>
-  Settles  : <"now" for Sky | "two-step — claim with /claim-unstaked after Lido finalises" for Lido>
+  Settles  : <"now" for Sky | "two-step — claim with /claim-withdrawals after Lido finalises" for Lido>
 ```
 
 On **Sepolia** with Lido, warn: the Lido withdrawal queue is paused there, so this will revert.
@@ -90,4 +90,4 @@ Unstaked from <name>.
   Wallet balance : <balance, human>
 ```
 
-For Lido: `Run /claim-unstaked once Lido has finalised the request.`
+For Lido: `Run /claim-withdrawals once Lido has finalised the request.`

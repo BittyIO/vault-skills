@@ -49,10 +49,10 @@ expiry (at most a year) and a permission mask:
 
 | Bit | Permission | Skills |
 |-----|------------|--------|
-| 1 | `YIELD` | `/stake`, `/unstake`, `/claim-unstaked` |
+| 1 | `YIELD` | `/stake`, `/unstake`, `/claim-withdrawals` |
 | 2 | `SUPPLY` | `/supply`, `/withdraw` |
-| 4 | `MARKET_TRADE` | `/rebalance` |
-| 8 | `INTENT` | `/limit-sell`, `/limit-buy`, `/twap-sell`, `/twap-buy`, `/cancel-order`, `/cancel-twap` |
+| 4 | `MARKET_TRADE` | `/market-sell` |
+| 8 | `INTENT` | `/limit-sell`, `/limit-buy`, `/twap-sell`, `/twap-buy`, `/cancel-intent-order`, `/cancel-twap` |
 | — | none | `/vault-balances`; setup: `/new-assetmanager`, `/deploy-vault`, `/fund-vault`, `/quickstart` |
 
 While the vault is locked the grant is dormant and every skill but `/vault-balances` is refused.

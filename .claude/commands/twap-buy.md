@@ -74,7 +74,7 @@ bin/bitty twap <from_address> <to_address> <sell_raw> <buy_per_part> <duration> 
 It prints `APP_DATA=…`, `START=…`, `PART0_UID=…` and `SCHEDULED=…`. On an `Error:`, show it and stop.
 If `SCHEDULED=no`, the Bitty API did not take the schedule: only part 0 is live and no later part
 will be posted. The output then lists every part as `PART_UID=…`; tell the user to cancel them all
-with `/cancel-order <uid> …` (the schedule's signature is public in part 0) and to try again.
+with `/cancel-intent-order <uid> …` (the schedule's signature is public in part 0) and to try again.
 
 ### 5. Result
 

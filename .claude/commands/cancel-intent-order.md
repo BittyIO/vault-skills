@@ -2,7 +2,7 @@ Cancel CoW limit orders of a BittyVault. Cancellation is ON-CHAIN: CoW's off-cha
 only accepts an EOA's own signature, so the vault invalidates the order UID on the CoW settlement
 contract itself (`cancelIntentOrders`). Once invalidated, an order can never fill.
 
-**Usage:** `/cancel-order [order_uid …]`
+**Usage:** `/cancel-intent-order [order_uid …]`
 
 - `[order_uid …]` — one or more 56-byte order UIDs (`0x` + 112 hex). Omitted: list the vault's open
   orders and ask which to cancel.

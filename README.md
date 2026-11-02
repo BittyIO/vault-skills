@@ -76,13 +76,13 @@ their own wallet (or do in the Bitty app).
 | `/withdraw` | `/withdraw <asset> <amount\|max>` | `SUPPLY` | Withdraw from a lending protocol |
 | `/stake` | `/stake <asset> <amount\|max>` | `YIELD` | Stake WETH in Lido or USDC in Sky |
 | `/unstake` | `/unstake <asset> <amount\|max>` | `YIELD` | Unstake (Sky at once; Lido requests a withdrawal) |
-| `/claim-unstaked` | `/claim-unstaked [id …]` | `YIELD` | Claim finalised Lido withdrawals |
-| `/rebalance` | `/rebalance <from> <to> <amount\|max> [slippage_bps]` | `MARKET_TRADE` | Market swap through the Uniswap Universal Router |
+| `/claim-withdrawals` | `/claim-withdrawals [id …]` | `YIELD` | Claim finalised Lido withdrawals |
+| `/market-sell` | `/market-sell <from> <to> <amount\|max> [slippage_bps]` | `MARKET_TRADE` | Market swap through the Uniswap Universal Router |
 | `/limit-sell` | `/limit-sell <from> <to> <sell> <buy_min> [valid_for]` | `INTENT` | CoW limit sell |
 | `/limit-buy` | `/limit-buy <from> <to> <buy> <sell_max> [valid_for]` | `INTENT` | CoW limit buy |
 | `/twap-sell` | `/twap-sell <from> <to> <total> <min_per_part> <parts> <interval>` | `INTENT` | CoW TWAP sell |
 | `/twap-buy` | `/twap-buy <from> <to> <total_buy> <sell_per_part> <parts> <interval>` | `INTENT` | CoW TWAP buy (DCA) |
-| `/cancel-order` | `/cancel-order [uid …]` | `INTENT` | Cancel CoW orders on chain |
+| `/cancel-intent-order` | `/cancel-intent-order [uid …]` | `INTENT` | Cancel CoW orders on chain |
 | `/cancel-twap` | `/cancel-twap [app_data]` | `INTENT` | Cancel every part of a TWAP |
 
 How the pieces fit:

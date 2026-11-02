@@ -61,7 +61,7 @@ Skip if the vault already holds WETH. Otherwise run `/fund-vault <demo_amount>`.
 finished steps are skipped." and go to the summary.
 
 ### Step 5 — Market swap WETH → USDT
-Run `/rebalance WETH USDT 0.01`: a Uniswap Universal Router trade held to the oracle price.
+Run `/market-sell WETH USDT 0.01`: a Uniswap Universal Router trade held to the oracle price.
 
 ### Step 6 — Supply WBTC to Aave, then withdraw it
 Aave's Sepolia market only takes WBTC (see `/supply`). Mint 1 WBTC into the vault from Aave's faucet,
@@ -74,12 +74,12 @@ Then `/supply WBTC 0.5`, show the position, and `/withdraw WBTC max`.
 
 ### Step 7 — Stake WETH in Lido
 Run `/stake WETH 0.005`; the vault receives stETH. Mention that `/unstake` opens a Lido withdrawal
-claimed later with `/claim-unstaked`, but Sepolia's withdrawal queue is paused, so it is not part of
+claimed later with `/claim-withdrawals`, but Sepolia's withdrawal queue is paused, so it is not part of
 the demo.
 
 ### Step 8 — Gasless CoW limit order, then cancel
 Run `/limit-sell USDT WETH <half the vault's USDT> 1 1h` — a deliberately unfillable price, so it rests
-on the book. Show the CoW explorer link, then `/cancel-order <uid>` to invalidate it on chain.
+on the book. Show the CoW explorer link, then `/cancel-intent-order <uid>` to invalidate it on chain.
 
 ### Step 9 — Final balances
 Run `/vault-balances`.
